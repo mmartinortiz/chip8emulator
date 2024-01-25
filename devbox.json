@@ -1,0 +1,13 @@
+{
+  "packages": ["python@3.12", "poetry@latest", "pre-commit@latest"],
+  "shell": {
+    "init_hook": [
+      "pre-commit install --install-hooks",
+      "poetry install --sync",
+      "poetry shell"
+    ],
+    "scripts": {
+      "test": ["poetry run pytest"]
+    }
+  }
+}
