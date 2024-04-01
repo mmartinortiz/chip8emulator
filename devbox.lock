@@ -2,64 +2,188 @@
   "lockfile_version": "1",
   "packages": {
     "poetry@latest": {
-      "last_modified": "2023-10-25T20:49:13Z",
+      "last_modified": "2024-03-27T09:47:59Z",
       "plugin_version": "0.0.4",
-      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#poetry",
+      "resolved": "github:NixOS/nixpkgs/2230a20f2b5a14f2db3d7f13a2dc3c22517e790b#poetry",
       "source": "devbox-search",
-      "version": "1.6.1",
+      "version": "1.8.2",
       "systems": {
         "aarch64-darwin": {
-          "store_path": "/nix/store/wbmb98gib37yi5ckzink0svw71qa9hva-python3.11-poetry-1.6.1"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/sxm956wyswz684jd0pjw90smkzx8bkp0-python3.11-poetry-1.8.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/c891wqgimy3k6sd2b1k6adj9mff99268-python3.11-poetry-1.8.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/sxm956wyswz684jd0pjw90smkzx8bkp0-python3.11-poetry-1.8.2"
         },
         "aarch64-linux": {
-          "store_path": "/nix/store/j4dks9q9i20yra6hcgfz2zsxidk75l3h-python3.11-poetry-1.6.1"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/v96slz1l77q5d9in5kxsps9l4aj80zsk-python3.11-poetry-1.8.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/501568g46hiwwj6fxxir0aflw5q44y0i-python3.11-poetry-1.8.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/v96slz1l77q5d9in5kxsps9l4aj80zsk-python3.11-poetry-1.8.2"
         },
         "x86_64-darwin": {
-          "store_path": "/nix/store/xcr6invhkw0nk8awj092ahvfdh55li39-python3.11-poetry-1.6.1"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/y9026al6rl8mgc3w36g1rqv7m1zh0abh-python3.11-poetry-1.8.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/dw22ks7n1k8phh8rk17f6awhz78qxf3l-python3.11-poetry-1.8.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/y9026al6rl8mgc3w36g1rqv7m1zh0abh-python3.11-poetry-1.8.2"
         },
         "x86_64-linux": {
-          "store_path": "/nix/store/6qdiirzpwxkf9v1dd0dppdn5fvh6srhg-python3.11-poetry-1.6.1"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/sn04pbb9nlaiwr65wiggivwwc9mm8srl-python3.11-poetry-1.8.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/v5wl3vxidklnz46s8rqniwq9ha1irrsp-python3.11-poetry-1.8.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/sn04pbb9nlaiwr65wiggivwwc9mm8srl-python3.11-poetry-1.8.2"
         }
       }
     },
     "pre-commit@latest": {
-      "last_modified": "2023-11-02T13:29:18Z",
-      "resolved": "github:NixOS/nixpkgs/b644d97bda6dae837d577e28383c10aa51e5e2d2#pre-commit",
+      "last_modified": "2024-03-22T11:26:23Z",
+      "resolved": "github:NixOS/nixpkgs/a3ed7406349a9335cb4c2a71369b697cecd9d351#pre-commit",
       "source": "devbox-search",
-      "version": "3.3.3",
+      "version": "3.6.2",
       "systems": {
         "aarch64-darwin": {
-          "store_path": "/nix/store/m2q031hr05khnbjk1kyivkv8c11pgpg0-pre-commit-3.3.3"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6wl4vr3gjkjqmmfdraliiy12ji0i9kr1-pre-commit-3.6.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/f1wq1h2xaxswjh2pflrkx1kxid23lrb2-pre-commit-3.6.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/6wl4vr3gjkjqmmfdraliiy12ji0i9kr1-pre-commit-3.6.2"
         },
         "aarch64-linux": {
-          "store_path": "/nix/store/jx4fmrar20xrgipbyv8nvqmk1ssfhb24-pre-commit-3.3.3"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nx7rp9yi4nyyqlr12cgi3awrxx30bbbl-pre-commit-3.6.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/3ca413zlf3mvs7amxsn9pkravxn4gsqv-pre-commit-3.6.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/nx7rp9yi4nyyqlr12cgi3awrxx30bbbl-pre-commit-3.6.2"
         },
         "x86_64-darwin": {
-          "store_path": "/nix/store/a7k58idjdryfj60cmdywhmv85lr3sllg-pre-commit-3.3.3"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/fv6fq7brr23d74igw1zs375gv5bznlyf-pre-commit-3.6.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/6ak59jmmyaapd1x1xrcm8mvc81r4r5rl-pre-commit-3.6.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/fv6fq7brr23d74igw1zs375gv5bznlyf-pre-commit-3.6.2"
         },
         "x86_64-linux": {
-          "store_path": "/nix/store/1hn7la1ipf7nhq7b4rj4hxbk2xbyyqkp-pre-commit-3.3.3"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/4b3pm5rzbrr4ia0hhqag47d1r6qc2qyl-pre-commit-3.6.2",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/9s8jf0fnli69jq28hsjwaqslzap5xr6p-pre-commit-3.6.2-dist"
+            }
+          ],
+          "store_path": "/nix/store/4b3pm5rzbrr4ia0hhqag47d1r6qc2qyl-pre-commit-3.6.2"
         }
       }
     },
     "python@3.12": {
-      "last_modified": "2023-10-25T20:49:13Z",
+      "last_modified": "2024-03-22T11:26:23Z",
       "plugin_version": "0.0.3",
-      "resolved": "github:NixOS/nixpkgs/75a52265bda7fd25e06e3a67dee3f0354e73243c#python312",
+      "resolved": "github:NixOS/nixpkgs/a3ed7406349a9335cb4c2a71369b697cecd9d351#python312",
       "source": "devbox-search",
-      "version": "3.12.0",
+      "version": "3.12.2",
       "systems": {
         "aarch64-darwin": {
-          "store_path": "/nix/store/9zq7vfk8a9fiyj66prg0a3zh28bz06yk-python3-3.12.0"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/jc5jlynlx561ibqxd6sy12hcqc8p39c9-python3-3.12.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/jc5jlynlx561ibqxd6sy12hcqc8p39c9-python3-3.12.2"
         },
         "aarch64-linux": {
-          "store_path": "/nix/store/zgvw696qpd5kn846k1l54w1s3rw4z8h1-python3-3.12.0"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/n5yvl08kxz5llrdiwwxfxyy6wiq2g6lc-python3-3.12.2",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/bihg62nz0vqqski18cpyppwgqz62blrq-python3-3.12.2-debug"
+            }
+          ],
+          "store_path": "/nix/store/n5yvl08kxz5llrdiwwxfxyy6wiq2g6lc-python3-3.12.2"
         },
         "x86_64-darwin": {
-          "store_path": "/nix/store/xanfjjzh237y1kdwy796qwa6415xrb18-python3-3.12.0"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/41yqb3sxsx22drhza74icn4x1gfh3h8m-python3-3.12.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/41yqb3sxsx22drhza74icn4x1gfh3h8m-python3-3.12.2"
         },
         "x86_64-linux": {
-          "store_path": "/nix/store/smpmzk81zrhxsajzkxjd21hqz50a9wlq-python3-3.12.0"
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/7yh2ax34jd7fgf17mjfd3c6niw1h2hsj-python3-3.12.2",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/mq8jh0sl1lcpk592whzw96n52grhq8wl-python3-3.12.2-debug"
+            }
+          ],
+          "store_path": "/nix/store/7yh2ax34jd7fgf17mjfd3c6niw1h2hsj-python3-3.12.2"
         }
       }
     }
