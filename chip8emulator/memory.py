@@ -1,4 +1,7 @@
-class Memory:
+from collections import UserDict
+
+
+class Memory(UserDict):
     def __init__(self, size: int = 4096):
         self.size = size
         self.memory = [0] * size
@@ -14,10 +17,13 @@ class Memory:
 
         return self.memory[address]
 
-    def __setitem__(self, address: int, value: int) -> int:
+    def __setitem__(self, address: int, value: bytes | int) -> int:
         self._validate_address(address)
 
-        if value.bit_length() > 8:
+        if isinstance(value, bytes) and len(value) > 1:
+            raise ValueError(f"Value too large: {len(value)} bytes")
+
+        if isinstance(value, int) and value.bit_length() > 8:
             raise ValueError(f"Value too large: {value.bit_length()} bits")
 
         self.memory[address] = value
