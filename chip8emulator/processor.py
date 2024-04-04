@@ -1,8 +1,69 @@
+from collections import UserDict
 from pathlib import Path
+from typing import List
 
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
 from chip8emulator.memory import Memory
+
+
+class Registry(UserDict):
+    def __init__(self, values: List[int] = None):
+        if not values:
+            values = [0] * 15
+
+        self.data = {k: v for k, v in enumerate(values)}
+        super().__init__(self.data)
+
+    def __transform_key(self, key):
+        """
+        Transforms the given key into its corresponding value. The key can be a
+        an integer between 0 and 15, or a string starting with "V" followed by a
+        number indicating the registry, or a string with an uppercase letter
+        between A and F.
+
+
+        Args:
+            key (str): The key to be transformed.
+
+        Returns:
+            int: The transformed value of the key.
+
+        Raises:
+            ValueError: If the key is not a valid registry.
+
+        """
+        if isinstance(key, int):
+            return key
+
+        if key.lower().startswith("v"):
+            key = key[1]
+
+        if key.isdigit():
+            key = int(key)
+        elif key.upper() in "ABCDEF":
+            if key.upper() == "A":
+                key = 10
+            elif key.upper() == "B":
+                key = 11
+            elif key.upper() == "C":
+                key = 12
+            elif key.upper() == "D":
+                key = 13
+            elif key.upper() == "E":
+                key = 14
+            else:
+                raise ValueError(f"Unexpected registry {key}")
+
+        return key
+
+    def __getitem__(self, key):
+        key = self.__transform_key(key)
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        key = self.__transform_key(key)
+        self.data[key] = value
 
 
 class Processor:
@@ -11,25 +72,12 @@ class Processor:
         self.graphics = graphics
         self.keypad = keypad
 
+        self.registry = Registry()
         self.reset()
 
     def reset(self) -> None:
         # Registers
-        self.v0 = 0
-        self.v1 = 0
-        self.v2 = 0
-        self.v3 = 0
-        self.v4 = 0
-        self.v5 = 0
-        self.v6 = 0
-        self.v7 = 0
-        self.v8 = 0
-        self.v9 = 0
-        self.vA = 0
-        self.vB = 0
-        self.vC = 0
-        self.vD = 0
-        self.vE = 0
+        self.registries = Registry([0] * 15)
 
         # Also known as vF
         self.carry_flag = 0
@@ -124,6 +172,21 @@ class Processor:
         address = opcode & 0x0FFF
         self.program_counter = address
 
+    def opcode_3NNN(self, opcode: int) -> None:
+        """
+        Skips the next instruction if VX equals NN (usually the next instruction is
+        a jump to skip a code block)
+        """
+        registry = (opcode & 0x0F00) >> 8
+
+        if registry not in self.registry.keys():
+            raise ValueError(f"Unexpected value {registry}")
+
+        value = opcode & 0x00FF
+
+        if self.registry[registry] == value:
+            self.program_counter += 4
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -145,9 +208,13 @@ class Processor:
             case 0x2000:
                 # Call to subroutine at NNN
                 self.opcode_2NNN(opcode)
+            case 0x3000:
+                self.opcode_3NNN(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN
+
+            # (0x3E44 & 0x0F00) >> 8
         # Execute opcode
         # Update timers
         self.execute_opcode(opcode)
