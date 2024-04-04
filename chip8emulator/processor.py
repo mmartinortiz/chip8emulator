@@ -187,6 +187,21 @@ class Processor:
         if self.registry[registry] == value:
             self.program_counter += 4
 
+    def opcode_4NNN(self, opcode: int) -> None:
+        """
+        Skips the next instruction if VX does not equal NN (usually the next instruction
+        is a jump to skip a code block)
+        """
+        registry = (opcode & 0x0F00) >> 8
+
+        if registry not in self.registry.keys():
+            raise ValueError(f"Unexpected value {registry}")
+
+        value = opcode & 0x00FF
+
+        if self.registry[registry] != value:
+            self.program_counter += 4
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -210,6 +225,8 @@ class Processor:
                 self.opcode_2NNN(opcode)
             case 0x3000:
                 self.opcode_3NNN(opcode)
+            case 0x4000:
+                self.opcode_4NNN(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN
