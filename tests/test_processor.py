@@ -144,3 +144,30 @@ def test_opcode_4NNN(
     processor.opcode_4NNN(opcode)
 
     assert processor.program_counter == expected_program_counter
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_x_value, registry_y, registry_y_value, program_counter, opcode, expected_program_counter",
+    [
+        # Registry X equal to registry Y, program counter increased by 4
+        ("V7", 0x33, "VA", 0x33, 0x0110, 0x57A0, 0x0114),
+        # Registry X not equal to registry Y, program counter not modified
+        ("V7", 0x33, "VA", 0x22, 0x0110, 0x57A0, 0x0110),
+    ],
+)
+def test_opcode_5NNN(
+    processor,
+    registry_x,
+    registry_x_value,
+    registry_y,
+    registry_y_value,
+    program_counter,
+    opcode,
+    expected_program_counter,
+):
+    processor.registry[registry_x] = registry_x_value
+    processor.registry[registry_y] = registry_y_value
+    processor.program_counter = program_counter
+    processor.opcode_5XY0(opcode)
+
+    assert processor.program_counter == expected_program_counter
