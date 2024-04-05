@@ -225,6 +225,13 @@ class Processor:
 
         self.registry[registry] = value
 
+    def opcode_7XNN(self, opcode: int) -> None:
+        """Adds NN to VX (carry flag is not changed)"""
+        registry = (opcode & 0x0F00) >> 8
+        value = opcode & 0x00FF
+
+        self.registry[registry] += value
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -254,6 +261,8 @@ class Processor:
                 self.opcode_5XY0(opcode)
             case 0x6000:
                 self.opcode_6XNN(opcode)
+            case 0x7000:
+                self.opcode_7XNN(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN

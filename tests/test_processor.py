@@ -177,3 +177,10 @@ def test_opcode_6XNN(processor):
     processor.opcode_6XNN(0x6333)
 
     assert processor.registry["V3"] == 0x33
+
+
+def test_opcode_7XNN(processor):
+    processor.registry["V3"] = 0x22
+    processor.opcode_7XNN(0x7301)
+
+    assert processor.registry["V3"] == 0x23
