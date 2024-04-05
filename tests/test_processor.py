@@ -171,3 +171,9 @@ def test_opcode_5NNN(
     processor.opcode_5XY0(opcode)
 
     assert processor.program_counter == expected_program_counter
+
+
+def test_opcode_6XNN(processor):
+    processor.opcode_6XNN(0x6333)
+
+    assert processor.registry["V3"] == 0x33

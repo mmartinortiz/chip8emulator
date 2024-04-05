@@ -218,6 +218,13 @@ class Processor:
         if self.registry[registry_x] == self.registry[registry_y]:
             self.program_counter += 4
 
+    def opcode_6XNN(self, opcode: int) -> None:
+        """Sets VX to NN"""
+        registry = (opcode & 0x0F00) >> 8
+        value = opcode & 0x00FF
+
+        self.registry[registry] = value
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -245,6 +252,8 @@ class Processor:
                 self.opcode_4NNN(opcode)
             case 0x5000:
                 self.opcode_5XY0(opcode)
+            case 0x6000:
+                self.opcode_6XNN(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN
