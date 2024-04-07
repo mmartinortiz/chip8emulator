@@ -77,7 +77,7 @@ class Processor:
 
     def reset(self) -> None:
         # Registers
-        self.registries = Registry([0] * 15)
+        self.registry = Registry([0] * 15)
 
         # Also known as vF
         self.carry_flag = 0
@@ -224,6 +224,7 @@ class Processor:
         value = opcode & 0x00FF
 
         self.registry[registry] = value
+        self.program_counter += 2
 
     def opcode_7XNN(self, opcode: int) -> None:
         """Adds NN to VX (carry flag is not changed)"""
@@ -231,6 +232,71 @@ class Processor:
         value = opcode & 0x00FF
 
         self.registry[registry] += value
+        self.program_counter += 2
+
+    def opcode_8XY0(self, opcode: int) -> None:
+        """Sets VX to the value of VY"""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        self.registry[registry_x] = self.registry[registry_y]
+        self.program_counter += 2
+
+    def opcode_8XY1(self, opcode: int) -> None:
+        """Sets VX to VX OR VY"""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        self.registry[registry_x] |= self.registry[registry_y]
+        self.program_counter += 2
+
+    def opcode_8XY2(self, opcode: int) -> None:
+        """Sets VX to VX AND VY"""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        self.registry[registry_x] &= self.registry[registry_y]
+        self.program_counter += 2
+
+    def opcode_8XY3(self, opcode: int) -> None:
+        """Sets VX to VX XOR VY"""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        self.registry[registry_x] ^= self.registry[registry_y]
+        self.program_counter += 2
+
+    def opcode_8XY4(self, opcode: int) -> None:
+        """Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't"""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        self.registry[registry_x] += self.registry[registry_y]
+
+        if self.registry[registry_x] > 255:
+            self.registry[registry_x] &= 0x0FF
+            self.carry_flag = 0b1
+        else:
+            self.carry_flag = 0b0
+
+        self.program_counter += 2
+
+    def opcode_8XY5(self, opcode: int) -> None:
+        """VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1
+        when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not)."""
+        registry_x = (opcode & 0x0F00) >> 8
+        registry_y = (opcode & 0x00F0) >> 4
+
+        if self.registry[registry_x] >= self.registry[registry_y]:
+            self.carry_flag = 0b1
+        else:
+            self.carry_flag = 0b0
+
+        self.registry[registry_x] = abs(
+            self.registry[registry_x] - self.registry[registry_y]
+        )
+
+        self.program_counter += 2
 
     def cycle(self) -> None:
         # Fetch opcode
@@ -263,6 +329,16 @@ class Processor:
                 self.opcode_6XNN(opcode)
             case 0x7000:
                 self.opcode_7XNN(opcode)
+            case 0x8000:
+                match opcode & 0x000F:
+                    case 0x0000:
+                        self.opcode_8XY0(opcode)
+                    case 0x0001:
+                        self.opcode_8XY1(opcode)
+                    case 0x0002:
+                        self.opcode_8XY2(opcode)
+                    case 0x0003:
+                        self.opcode_8XY3(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN

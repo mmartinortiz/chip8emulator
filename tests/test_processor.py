@@ -174,13 +174,101 @@ def test_opcode_5NNN(
 
 
 def test_opcode_6XNN(processor):
+    processor.program_counter = 0x110
     processor.opcode_6XNN(0x6333)
 
     assert processor.registry["V3"] == 0x33
+    assert processor.program_counter == 0x112
 
 
 def test_opcode_7XNN(processor):
+    processor.program_counter = 0x110
     processor.registry["V3"] = 0x22
     processor.opcode_7XNN(0x7301)
 
     assert processor.registry["V3"] == 0x23
+    assert processor.program_counter == 0x112
+
+
+def test_opcode_8XY0(processor):
+    processor.registry["V3"] = 0x33
+    processor.registry["V4"] = 0x22
+    processor.program_counter = 0x110
+    processor.opcode_8XY0(0x8340)
+
+    assert processor.registry["V3"] == 0x22
+    assert processor.program_counter == 0x112
+
+
+def test_opcode_8XY1(processor):
+    processor.registry["V3"] = 0b1010
+    processor.registry["V4"] = 0b1100
+    processor.program_counter = 0x110
+    processor.opcode_8XY1(0x8341)
+
+    assert processor.registry["V3"] == 0b1110
+    assert processor.program_counter == 0x112
+
+
+def test_opcode_8XY2(processor):
+    processor.registry["V3"] = 0b1010
+    processor.registry["V4"] = 0b1100
+    processor.program_counter = 0x110
+    processor.opcode_8XY2(0x8342)
+
+    assert processor.registry["V3"] == 0b1000
+    assert processor.program_counter == 0x112
+
+
+def test_opcode_8XY3(processor):
+    processor.registry["V3"] = 0b1010
+    processor.registry["V4"] = 0b1100
+    processor.program_counter = 0x110
+    processor.opcode_8XY3(0x8343)
+
+    assert processor.registry["V3"] == 0b0110
+    assert processor.program_counter == 0x112
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_y, value_x, value_y, expected, overflow",
+    [
+        ("V3", "V4", 0x33, 0x22, 0x55, 0b0),
+        ("V3", "V4", 0xFF, 0x01, 0x00, 0b1),
+        ("V3", "V4", 0x11, 0xFF, 0x10, 0b1),
+        ("V3", "V4", 0x01, 0x01, 0x02, 0b0),
+    ],
+)
+def test_opcode_8XY4(
+    processor, registry_x, registry_y, value_x, value_y, expected, overflow
+):
+    processor.registry[registry_x] = value_x
+    processor.registry[registry_y] = value_y
+    processor.program_counter = 0x110
+    processor.opcode_8XY4(0x8344)
+
+    assert processor.registry[registry_x] == expected
+    assert processor.carry_flag == overflow
+    assert processor.program_counter == 0x112
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_y, value_x, value_y, expected, overflow",
+    [
+        (3, 4, 0x33, 0x22, 0x11, 0b1),
+        (3, 4, 0x11, 0x22, 0x11, 0b0),
+        (3, 4, 0xAA, 0xEE, 0x44, 0b0),
+        (3, 4, 0x01, 0x01, 0x00, 0b1),
+    ],
+)
+def test_opcode_8XY5(
+    processor, registry_x, registry_y, value_x, value_y, expected, overflow
+):
+    processor.registry[registry_x] = value_x
+    processor.registry[registry_y] = value_y
+    processor.program_counter = 0x110
+    processor.opcode_8XY5(int(f"0x8{registry_x}{registry_y}5", 16))
+
+    assert processor.registry[registry_x] == expected
+    assert processor.carry_flag == overflow
+    assert processor.program_counter == 0x112
