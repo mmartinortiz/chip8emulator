@@ -377,6 +377,40 @@ class Processor:
 
         self.program_counter += 2
 
+    def opcode_8XYE(self, opcode: Word) -> None:
+        """Stores the most significant bit of VX in VF and then
+        shifts VX to the left by 1"""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        # Store the most significant bit of VX in VF
+        self.carry_flag = (
+            Byte(1) if (self.registry[registry_x] & 0b10000000) > 0 else Byte(0)
+        )
+
+        # Shift VX to the left by 1
+        self.registry[registry_x] = Byte(self.registry[registry_x] << 1)
+
+        self.program_counter += 2
+
+    def opcode_9XY0(self, opcode: Word) -> None:
+        """Skips the next instruction if VX does not equal VY. (Usually the next
+        instruction is a jump to skip a code block)"""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+        registry_y = opcode.get_third_nibble()
+
+        if self.registry[registry_x] != self.registry[registry_y]:
+            self.program_counter += 4
+        else:
+            self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -424,8 +458,12 @@ class Processor:
                         self.opcode_8XY5(opcode)
                     case 0x0006:
                         self.opcode_8XY6(opcode)
+                    case 0x0007:
+                        self.opcode_8XY7(opcode)
+                    case 0x000E:
+                        self.opcode_8XYE(opcode)
             case 0x900:
-                self.opcode_9000(opcode)
+                self.opcode_9XY0(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
                 # Sets I to the address NNN

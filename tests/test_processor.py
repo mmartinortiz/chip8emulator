@@ -318,3 +318,52 @@ def test_opcode_8XY7(
     assert processor.registry[registry_x] == expected
     assert processor.carry_flag == overflow
     assert processor.program_counter == 0x112
+
+
+@pytest.mark.parametrize(
+    "registry_x, value_x, expected_value, expected_carry",
+    [
+        (3, 0b01111111, 0b11111110, 0b0),
+        (3, 0b10000000, 0b00000000, 0b1),
+    ],
+)
+def test_opcode_8XYE(
+    processor,
+    registry_x,
+    value_x,
+    expected_value,
+    expected_carry,
+):
+    processor.registry[registry_x] = value_x
+    processor.program_counter = 0x110
+    processor.opcode_8XYE(int(f"0x8{registry_x}0E", 16))
+
+    assert processor.registry[registry_x] == expected_value
+    assert processor.carry_flag == expected_carry
+    assert processor.program_counter == 0x112
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_y, value_x, value_y, program_counter, expected_program_counter",
+    [
+        # VX not equal to VY, skip next instruction
+        (3, 4, 0x33, 0x22, 0x0110, 0x0114),
+        # VX equal to VY, do not skip next instruction
+        (3, 4, 0x33, 0x33, 0x0110, 0x0112),
+    ],
+)
+def test_opcode_9XY0(
+    processor,
+    registry_x,
+    registry_y,
+    value_x,
+    value_y,
+    program_counter,
+    expected_program_counter,
+):
+    processor.registry[registry_x] = value_x
+    processor.registry[registry_y] = value_y
+    processor.program_counter = program_counter
+    processor.opcode_9XY0(int(f"0x9{registry_x}{registry_y}0", 16))
+
+    assert processor.program_counter == expected_program_counter
