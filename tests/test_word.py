@@ -73,3 +73,17 @@ def test_word_sub(a, b, expected):
 def test_word_lt(a, b, expected):
     result = a < b
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (0x1234, 0x1234),
+        (0xAFFFF, 0xFFFF),
+        (128, 0x0080),
+        (65536, 0x0000),
+    ],
+)
+def test_word_init(value, expected):
+    word = Word(value)
+    assert word.value == expected

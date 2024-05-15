@@ -1,5 +1,22 @@
 class Nibble:
     def __init__(self, value: int):
+        """
+        Class to represent a nibble (4 bits) in the Chip-8 system.
+        Bits above 4 are ignored.
+
+        Args:
+            value (int): The value to be stored in the Nibble object.
+
+        Examples:
+        >>> Nibble(0x1)
+        "0x1"
+        >>> Nibble(0xA)
+        "0xA"
+        >>> Nibble(0xF)
+        "0xF"
+        >>> Nibble(0x10)
+        "0x0"
+        """
         self.value = value & 0xF
 
     def __str__(self):

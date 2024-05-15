@@ -70,3 +70,17 @@ def test_byte_abs(value, expected):
 
     assert abs_byte == expected
     assert isinstance(abs_byte, Byte)
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (0x12, 0x12),
+        (128, 0x80),
+        (255, 0xFF),
+        (256, 0x00),
+    ],
+)
+def test_byte_init(value, expected):
+    byte = Byte(value)
+    assert byte.value == expected

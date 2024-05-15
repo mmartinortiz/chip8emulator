@@ -3,7 +3,25 @@ from chip8emulator.types import Byte, Nibble
 
 class Word:
     def __init__(self, value: int):
-        self.value = value
+        """
+        Class to represent Word objects. A Word object is a 16-bit, or 2-byte object.
+        Only the first 16 bits are considered, the rest are ignored.
+
+        Args:
+            value (int): The value to be stored in the Word object.
+
+        Examples:
+        >>> Word(0x1234)
+        "0x1234"
+        >>> Word(128)
+        "0x0080"
+        >>> Word(65535)
+        "0xFFFF"
+        # Bits above 16 are ignored
+        >>> Word(65536)
+        "0x0000"
+        """
+        self.value = value & 0xFFFF
 
     def get_high_byte(self) -> Byte:
         return Byte((self.value & 0xFF00) >> 8)

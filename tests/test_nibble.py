@@ -63,3 +63,17 @@ def test_nibble_sub(value_1, value_2, expected):
 )
 def test_nibble_eq(value_1, value_2, expected):
     assert (value_1 == value_2) == expected
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (0x0, 0x0),
+        (0xA, 0xA),
+        (15, 0xF),
+        (16, 0x0),
+    ],
+)
+def test_nibble_init(value, expected):
+    nibble = Nibble(value)
+    assert nibble.value == expected

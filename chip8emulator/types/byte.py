@@ -11,7 +11,25 @@ class Byte:
     """
 
     def __init__(self, value: int):
-        self.value = value
+        """
+        Class to represent Byte objects. A Byte object is an 8-bit object, or 2 nibbles.
+        Only the first 8 bits are considered, the rest are ignored.
+
+        Args:
+            value (int): The value to be stored in the Byte object.
+
+        Examples:
+        >>> Byte(0x12)
+        "0x12"
+        >>> Byte(128)
+        "0x80"
+        >>> Byte(255)
+        "0xFF"
+        # Bits above 8 are ignored
+        >>> Byte(256)
+        "0x00"
+        """
+        self.value = value & 0xFF
 
     def get_high_nibble(self) -> Nibble:
         return Nibble((self.value & 0xF0) >> 4)
