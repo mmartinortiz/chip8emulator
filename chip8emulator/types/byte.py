@@ -98,5 +98,19 @@ class Byte:
     def __abs__(self) -> "Byte":
         return Byte(abs(self.value) & 0xFF)
 
+    def __and__(self, other) -> "Byte":
+        if not isinstance(other, (int, Byte)):
+            return NotImplemented
+
+        if isinstance(other, int):
+            result = self.value & other
+        elif isinstance(other, Byte):
+            result = self.value & other.value
+
+        return Byte(result)
+
+    def __rand__(self, other) -> "Byte":
+        return self.__and__(other)
+
     def __repr__(self) -> str:
         return hex(self.value)

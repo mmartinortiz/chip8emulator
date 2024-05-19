@@ -84,3 +84,16 @@ def test_byte_abs(value, expected):
 def test_byte_init(value, expected):
     byte = Byte(value)
     assert byte.value == expected
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        (Byte(0x10), Byte(0x20), Byte(0x00)),
+        (Byte(0xAA), Byte(0x60), Byte(0x20)),
+        (Byte(0x10), 1, Byte(0x00)),
+        (1, Byte(0x10), Byte(0x00)),
+    ],
+)
+def test_byte_and(a, b, expected):
+    assert (a & b) == expected
