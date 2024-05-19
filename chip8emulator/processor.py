@@ -1,5 +1,6 @@
 from collections import UserDict
 from pathlib import Path
+import random
 from typing import List
 
 from chip8emulator.graphics import Graphics
@@ -119,22 +120,6 @@ class Processor:
             | self.memory[self.program_counter + 1]
         )
         return opcode
-
-    def opcode_ANNN(self, opcode: Word) -> None:
-        """
-        Sets the value of the index registry to the address specified in the opcode.
-
-        Parameters:
-        - opcode (int): The opcode containing the address to be set.
-        """
-        address = opcode & 0x0FFF
-        self.index_registry = address
-        self.program_counter += 2
-
-    def opcode_00E0(self) -> None:
-        """Clear screen"""
-        # TODO: Clear screen
-        ...
 
     def opcode_000E(self) -> None:
         # Restore the program counter
@@ -411,6 +396,42 @@ class Processor:
         else:
             self.program_counter += 2
 
+    def opcode_ANNN(self, opcode: Word) -> None:
+        """
+        Sets the value of the index registry to the address specified in the opcode.
+
+        Parameters:
+        - opcode (int): The opcode containing the address to be set.
+        """
+        address = opcode & 0x0FFF
+        self.index_registry = address
+        self.program_counter += 2
+
+    def opcode_BNNN(self, opcode: Word) -> None:
+        """Jumps to the address NNN plus V0"""
+
+        address = opcode & 0x0FFF
+        self.program_counter = address + self.registry[0]
+
+    def opcode_CXNN(self, opcode: Word) -> None:
+        """Sets VX to the result of a bitwise and operation on a random number
+        (Typically: 0 to 255) and NN"""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry = opcode.get_second_nibble()
+        value = opcode.get_low_byte()
+
+        random_value = Byte(random.randint(0, 255))
+
+        self.registry[registry] = random_value & value
+
+    def opcode_00E0(self) -> None:
+        """Clear screen"""
+        # TODO: Clear screen
+        ...
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
@@ -466,7 +487,10 @@ class Processor:
                 self.opcode_9XY0(opcode)
             case 0xA000:
                 self.opcode_ANNN(opcode)
-                # Sets I to the address NNN
+            case 0xB000:
+                self.opcode_BNNN(opcode)
+            case 0xC000:
+                self.opcode_CXNN(opcode)
 
             # (0x3E44 & 0x0F00) >> 8
         # Execute opcode
