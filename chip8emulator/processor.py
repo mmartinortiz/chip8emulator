@@ -15,6 +15,7 @@ class Registry(UserDict):
             values = [Byte(0)] * 15
 
         self.data = {k: v for k, v in enumerate(values)}
+        self.draw_flag = False
         super().__init__(self.data)
 
     def __transform_key(self, key: str | int | Nibble) -> int:
@@ -120,6 +121,11 @@ class Processor:
             | self.memory[self.program_counter + 1]
         )
         return opcode
+
+    def opcode_00E0(self) -> None:
+        """Clear screen"""
+        # TODO: Clear screen
+        ...
 
     def opcode_000E(self) -> None:
         # Restore the program counter
@@ -427,10 +433,39 @@ class Processor:
 
         self.registry[registry] = random_value & value
 
-    def opcode_00E0(self) -> None:
-        """Clear screen"""
-        # TODO: Clear screen
-        ...
+    def opcode_DXYN(self, opcode: Word) -> None:
+        """
+        Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height
+        of N pixels. Each row of 8 pixels is read as bit-coded starting from memory
+        location I; I value doesn’t change after the execution of this instruction.
+        As described above, VF is set to 1 if any screen pixels are flipped from set
+        to unset when the sprite is drawn, and to 0 if that doesn’t happen.
+        """
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+        registry_y = opcode.get_third_nibble()
+        height = opcode.get_fourth_nibble()
+
+        x = self.registry[registry_x]
+        y = self.registry[registry_y]
+
+        self.carry_flag = 0
+
+        for y_line in range(0, height.value):
+            pixel = self.memory[self.index_registry + y_line]
+
+            for x_line in range(0, 8):
+                # Check if the bit of the pixel to be drawn is set to 1
+                if (pixel & (0x80 >> x_line)) != 0:
+                    if self.graphics.get(x + x_line, y + y_line) == 1:
+                        self.carry_flag = 1
+                    self.graphics.set(x + x_line, y + y_line, 1)
+
+        self.program_counter += 2
+        self.draw_flag = True
 
     def cycle(self) -> None:
         # Fetch opcode

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from chip8emulator.graphics import Graphics
 from chip8emulator.memory import Memory
 from chip8emulator.processor import Processor
 from chip8emulator.types import Byte, Word
@@ -392,3 +393,80 @@ def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
     processor.opcode_CXNN(int(f"0xC{registry}{value}", 16))
 
     assert processor.registry[registry] == expected
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_y, height, x, y, index_registry, memory, pixels, expected, carry",
+    [
+        (
+            4,
+            5,
+            3,
+            1,
+            1,
+            1,
+            [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
+            [list(0 for _ in range(10)) for _ in range(6)],
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            0,
+        ),
+        (
+            4,
+            5,
+            3,
+            1,
+            1,
+            1,
+            [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
+            # For the current state of the pixels, we expect a collision.
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            [
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+                [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+                [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ],
+            1,
+        ),
+    ],
+)
+def test_opcode_DXYN(
+    processor,
+    registry_x,
+    registry_y,
+    height,
+    x,
+    y,
+    index_registry,
+    memory,
+    pixels,
+    expected,
+    carry,
+):
+    processor.program_counter = 0x110
+    processor.registry[registry_x] = x
+    processor.registry[registry_y] = y
+    processor.index_registry = index_registry
+    processor.memory = Memory(content=memory)
+    processor.graphics = Graphics(pixels=pixels)
+    processor.opcode_DXYN(int(f"0xD{registry_x}{registry_y}{height}", 16))
+
+    assert processor.graphics.pixels == expected
+    assert processor.carry_flag == carry
+    assert processor.program_counter == 0x112
