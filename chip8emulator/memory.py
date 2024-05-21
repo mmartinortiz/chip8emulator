@@ -1,5 +1,7 @@
 from collections import UserDict
 
+from chip8emulator.types import Word
+
 
 class Memory(UserDict):
     def __init__(self, size: int = 4096):
@@ -12,7 +14,10 @@ class Memory(UserDict):
 
         return True
 
-    def __getitem__(self, address: int) -> int:
+    def __getitem__(self, address: int | Word) -> int:
+        if isinstance(address, Word):
+            address = address.value
+
         self._validate_address(address)
 
         return self.memory[address]
