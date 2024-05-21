@@ -11,7 +11,7 @@ from chip8emulator.types import Byte, Word
 
 @pytest.fixture
 def processor():
-    return Processor(memory=Memory(), graphics=None, keypad=None)
+    return Processor(memory=Memory(), graphics=Graphics(), keypad=None)
 
 
 @pytest.mark.parametrize(
@@ -463,8 +463,8 @@ def test_opcode_DXYN(
     processor.registry[registry_x] = x
     processor.registry[registry_y] = y
     processor.index_registry = index_registry
-    processor.memory = Memory(content=memory)
-    processor.graphics = Graphics(pixels=pixels)
+    processor.memory.memory = memory
+    processor.graphics.pixels = pixels
     processor.opcode_DXYN(int(f"0xD{registry_x}{registry_y}{height}", 16))
 
     assert processor.graphics.pixels == expected

@@ -1,17 +1,9 @@
-from typing import List
-
-
 class Graphics:
-    def __init__(
-        self, width: int = 64, height: int = 32, pixels: List[List[int]] = None
-    ) -> None:
+    def __init__(self, width: int = 64, height: int = 32) -> None:
         self.width = width
         self.height = height
 
-        if pixels:
-            self.pixels = pixels
-        else:
-            self.pixels = [[0] * width for _ in range(height)]
+        self.pixels = [[0] * width for _ in range(height)]
 
     def clear(self) -> None:
         """
