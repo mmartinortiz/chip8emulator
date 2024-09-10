@@ -1,6 +1,6 @@
+import random
 from collections import UserDict
 from pathlib import Path
-import random
 from typing import List
 
 from chip8emulator.graphics import Graphics
@@ -466,6 +466,30 @@ class Processor:
 
         self.program_counter += 2
         self.draw_flag = True
+
+    def opcode_EX9E(self, opcode: Word) -> None:
+        """Skips the next instruction if the key stored in VX is pressed (usually the
+        next instruction is a jump to skip a code block)."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        if self.registry[registry_x] == self.keypad.get_pressed_key_as_nibble():
+            self.program_counter += 2
+
+    def opcode_EXA1(self, opcode: Word) -> None:
+        """Skips the next instruction if the key stored in VX is not pressed (usually
+        the next instruction is a jump to skip a code block)."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        if self.registry[registry_x] != self.keypad.get_pressed_key_as_nibble():
+            self.program_counter += 2
 
     def cycle(self) -> None:
         # Fetch opcode

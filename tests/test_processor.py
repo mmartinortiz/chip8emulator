@@ -4,14 +4,19 @@ from pathlib import Path
 import pytest
 
 from chip8emulator.graphics import Graphics
+from chip8emulator.keypad import Keypad
 from chip8emulator.memory import Memory
 from chip8emulator.processor import Processor
-from chip8emulator.types import Byte, Word
+from chip8emulator.types import Byte, Nibble, Word
 
 
 @pytest.fixture
 def processor():
-    return Processor(memory=Memory(), graphics=Graphics(), keypad=None)
+    return Processor(
+        memory=Memory(),
+        graphics=Graphics(),
+        keypad=Keypad(),
+    )
 
 
 @pytest.mark.parametrize(
@@ -470,3 +475,39 @@ def test_opcode_DXYN(
     assert processor.graphics.pixels == expected
     assert processor.carry_flag == carry
     assert processor.program_counter == 0x112
+
+
+@pytest.mark.parametrize(
+    "registry_x, program_counter, x_value, key_pressed, expected",
+    [
+        (1, 0x110, Nibble(1), Nibble(1), 0x112),
+        (1, 0x110, Nibble(1), Nibble(6), 0x110),
+    ],
+)
+def test_opcode_EX9E(
+    processor, registry_x, program_counter, x_value, key_pressed, expected
+):
+    processor.program_counter = program_counter
+    processor.registry[registry_x] = x_value
+    processor.keypad.press_key(key_pressed)
+    processor.opcode_EX9E(int(f"0xE{registry_x}9E", 16))
+
+    assert processor.program_counter == expected
+
+
+@pytest.mark.parametrize(
+    "registry_x, program_counter, x_value, key_pressed, expected",
+    [
+        (1, 0x110, Nibble(1), Nibble(1), 0x110),
+        (1, 0x110, Nibble(1), Nibble(6), 0x112),
+    ],
+)
+def test_opcode_EXA1(
+    processor, registry_x, program_counter, x_value, key_pressed, expected
+):
+    processor.program_counter = program_counter
+    processor.registry[registry_x] = x_value
+    processor.keypad.press_key(key_pressed)
+    processor.opcode_EXA1(int(f"0xE{registry_x}A1", 16))
+
+    assert processor.program_counter == expected

@@ -54,3 +54,9 @@ class Nibble:
             return self.value == other
         elif isinstance(other, Nibble):
             return self.value == other.value
+
+    def __repr__(self) -> str:
+        return hex(self.value)
+
+    def to_int(self) -> int:
+        return self.value
