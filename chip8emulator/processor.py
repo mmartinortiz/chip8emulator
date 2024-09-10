@@ -541,6 +541,17 @@ class Processor:
         self.sound_timer = self.registry[registry_x]
         self.program_counter += 2
 
+    def opcode_FX1E(self, opcode: Word) -> None:
+        """Adds VX to I. VF is not affected."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        self.index_registry += self.registry[registry_x]
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()

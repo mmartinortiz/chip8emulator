@@ -563,3 +563,28 @@ def test_opcode_FX18(
 
     assert processor.sound_timer == expected_sound_timer
     assert processor.program_counter == expected_program_counter
+
+
+@pytest.mark.parametrize(
+    "registry_x, value, initial_index, expected_index, pc, expected_pc",
+    [
+        (3, 0x22, 0x100, 0x122, 0x110, 0x112),
+        (5, 0x10, 0x200, 0x210, 0x110, 0x112),
+    ],
+)
+def test_opcode_FX1E(
+    processor,
+    registry_x,
+    value,
+    initial_index,
+    expected_index,
+    pc,
+    expected_pc,
+):
+    processor.registry[registry_x] = value
+    processor.index_registry = initial_index
+    processor.program_counter = pc
+    processor.opcode_FX1E(int(f"0xF{registry_x}1E", 16))
+
+    assert processor.index_registry == expected_index
+    assert processor.program_counter == expected_pc
