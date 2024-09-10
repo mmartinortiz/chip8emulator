@@ -527,3 +527,39 @@ def test_opcode_FX07(processor, program_counter, registry_x, delay, expected_pc)
 
     assert processor.registry[registry_x] == delay
     assert processor.program_counter == expected_pc
+
+
+@pytest.mark.parametrize(
+    "registry_x, value, expected_delay_timer, expected_program_counter",
+    [
+        (3, 0x22, 0x22, 0x112),
+        (5, 0x00, 0x00, 0x112),
+    ],
+)
+def test_opcode_FX15(
+    processor, registry_x, value, expected_delay_timer, expected_program_counter
+):
+    processor.registry[registry_x] = value
+    processor.program_counter = 0x110
+    processor.opcode_FX15(int(f"0xF{registry_x}15", 16))
+
+    assert processor.delay_timer == expected_delay_timer
+    assert processor.program_counter == expected_program_counter
+
+
+@pytest.mark.parametrize(
+    "registry_x, value, expected_sound_timer, expected_program_counter",
+    [
+        (3, 0x22, 0x22, 0x112),
+        (5, 0x00, 0x00, 0x112),
+    ],
+)
+def test_opcode_FX18(
+    processor, registry_x, value, expected_sound_timer, expected_program_counter
+):
+    processor.registry[registry_x] = value
+    processor.program_counter = 0x110
+    processor.opcode_FX18(int(f"0xF{registry_x}18", 16))
+
+    assert processor.sound_timer == expected_sound_timer
+    assert processor.program_counter == expected_program_counter

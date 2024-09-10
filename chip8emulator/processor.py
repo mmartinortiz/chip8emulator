@@ -519,6 +519,28 @@ class Processor:
         self.registry[registry_x] = key
         self.program_counter += 2
 
+    def opcode_FX15(self, opcode: Word) -> None:
+        """Sets the delay timer to VX"""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        self.delay_timer = self.registry[registry_x]
+        self.program_counter += 2
+
+    def opcode_FX18(self, opcode: Word) -> None:
+        """Sets the sound timer to VX"""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        self.sound_timer = self.registry[registry_x]
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
