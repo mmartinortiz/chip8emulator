@@ -564,6 +564,27 @@ class Processor:
         self.index_registry = self.registry[registry_x]
         self.program_counter += 2
 
+    def opcode_FX33(self, opcode: Word) -> None:
+        """It takes the number in VX (which is one byte, so it can be any number
+        from 0 to 255) and converts it to three decimal digits, storing these digits in
+        memory at the address in the index register I.
+
+        For example, if VX contains 156 (or 9C in hexadecimal), it would put the
+        number 1 at the address in I, 5 in address I + 1, and 6 in address I + 2."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        value = self.registry[registry_x]
+
+        self.memory[self.index_registry] = value // 100
+        self.memory[self.index_registry + 1] = (value // 10) % 10
+        self.memory[self.index_registry + 2] = value % 10
+
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
