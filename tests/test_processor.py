@@ -588,3 +588,21 @@ def test_opcode_FX1E(
 
     assert processor.index_registry == expected_index
     assert processor.program_counter == expected_pc
+
+
+@pytest.mark.parametrize(
+    "registry_x, value, expected_index_registry, expected_program_counter",
+    [
+        (3, 0x0, 0x0, 0x112),
+        (5, 0x1, 0x1, 0x112),
+    ],
+)
+def test_opcode_FX29(
+    processor, registry_x, value, expected_index_registry, expected_program_counter
+):
+    processor.registry[registry_x] = value
+    processor.program_counter = 0x110
+    processor.opcode_FX29(int(f"0xF{registry_x}29", 16))
+
+    assert processor.index_registry == expected_index_registry
+    assert processor.program_counter == expected_program_counter

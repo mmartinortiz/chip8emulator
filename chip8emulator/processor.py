@@ -552,6 +552,18 @@ class Processor:
         self.index_registry += self.registry[registry_x]
         self.program_counter += 2
 
+    def opcode_FX29(self, opcode: Word) -> None:
+        """The index register I is set to the address of the hexadecimal character in
+        VX."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        self.index_registry = self.registry[registry_x]
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
