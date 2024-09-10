@@ -491,6 +491,17 @@ class Processor:
         if self.registry[registry_x] != self.keypad.get_pressed_key_as_nibble():
             self.program_counter += 2
 
+    def opcode_FX07(self, opcode: Word) -> None:
+        """Sets VX to the value of the delay timer."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        self.registry[registry_x] = self.delay_timer
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()

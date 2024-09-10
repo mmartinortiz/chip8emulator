@@ -511,3 +511,19 @@ def test_opcode_EXA1(
     processor.opcode_EXA1(int(f"0xE{registry_x}A1", 16))
 
     assert processor.program_counter == expected
+
+
+@pytest.mark.parametrize(
+    "program_counter, registry_x, delay, expected_pc",
+    [
+        (0x110, 0x3, 0x22, 0x112),
+        (0x110, 0x3, 0x00, 0x112),
+    ],
+)
+def test_opcode_FX07(processor, program_counter, registry_x, delay, expected_pc):
+    processor.program_counter = program_counter
+    processor.delay_timer = delay
+    processor.opcode_FX07(int(f"0xF{registry_x}07", 16))
+
+    assert processor.registry[registry_x] == delay
+    assert processor.program_counter == expected_pc
