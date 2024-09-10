@@ -19,3 +19,7 @@ class Keypad:
 
     def get_pressed_key_as_nibble(self) -> Nibble:
         return Nibble(self.keys.index(self.pressed_key))
+
+    def wait_for_key(self):
+        # TODO: Implement this method
+        pass

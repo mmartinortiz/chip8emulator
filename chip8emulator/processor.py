@@ -502,6 +502,23 @@ class Processor:
         self.registry[registry_x] = self.delay_timer
         self.program_counter += 2
 
+    def opcode_FX0A(self, opcode: Word) -> None:
+        """A key press is awaited, and then stored in VX (blocking operation, all
+        instruction halted until next key event)."""
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble()
+
+        key = self.keypad.get_pressed_key_as_nibble()
+
+        if key is None:
+            return
+
+        self.registry[registry_x] = key
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
