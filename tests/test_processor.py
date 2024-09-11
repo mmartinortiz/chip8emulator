@@ -629,3 +629,68 @@ def test_opcode_FX33(
     assert processor.memory[processor.index_registry + 1] == expected_memory[1]
     assert processor.memory[processor.index_registry + 2] == expected_memory[2]
     assert processor.program_counter == expected_program_counter
+
+
+@pytest.mark.parametrize(
+    "registry_x, registry_values, index_registry, expected_memory, pc, expected_program_counter",
+    [
+        (
+            3,
+            [0x01, 0x02, 0x03, 0x04],
+            0x200,
+            [0x01, 0x02, 0x03, 0x04],
+            0x200,
+            0x202,
+        ),
+        (
+            5,
+            [0x01, 0x02, 0x03, 0x04, 0x05, 0x06],
+            0x300,
+            [0x01, 0x02, 0x03, 0x04, 0x05, 0x06],
+            0x200,
+            0x202,
+        ),
+    ],
+)
+def test_opcode_FX55(
+    processor,
+    registry_x,
+    registry_values,
+    index_registry,
+    expected_memory,
+    pc,
+    expected_program_counter,
+):
+    for i, value in enumerate(registry_values):
+        processor.registry[i] = value
+    processor.index_registry = index_registry
+    processor.program_counter = pc
+
+    processor.opcode_FX55(int(f"0xF{registry_x}55", 16))
+
+    for i in range(registry_x + 1):
+        assert processor.memory[processor.index_registry + i] == expected_memory[i]
+
+    assert processor.program_counter == expected_program_counter
+
+
+@pytest.mark.parametrize(
+    "index_registry, memory_values, registry_x, expected_registry_values",
+    [
+        (0x300, [0x12, 0x34, 0x56, 0x78, 0x9A], 4, [0x12, 0x34, 0x56, 0x78, 0x9A]),
+        (0x200, [0x01, 0x02, 0x03], 2, [0x01, 0x02, 0x03]),
+        (0x100, [0xFF, 0xEE, 0xDD, 0xCC], 3, [0xFF, 0xEE, 0xDD, 0xCC]),
+    ],
+)
+def test_opcode_FX65(
+    processor, index_registry, memory_values, registry_x, expected_registry_values
+):
+    processor.index_registry = index_registry
+    for i, value in enumerate(memory_values):
+        processor.memory[index_registry + i] = value
+    processor.program_counter = 0x200
+    processor.opcode_FX65(int(f"0xF{registry_x}65", 16))
+
+    for i in range(registry_x + 1):
+        assert processor.registry[i] == expected_registry_values[i]
+    assert processor.program_counter == 0x202

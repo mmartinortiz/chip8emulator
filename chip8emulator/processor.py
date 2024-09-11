@@ -437,9 +437,9 @@ class Processor:
         """
         Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height
         of N pixels. Each row of 8 pixels is read as bit-coded starting from memory
-        location I; I value doesn’t change after the execution of this instruction.
+        location I; I value doesn't change after the execution of this instruction.
         As described above, VF is set to 1 if any screen pixels are flipped from set
-        to unset when the sprite is drawn, and to 0 if that doesn’t happen.
+        to unset when the sprite is drawn, and to 0 if that doesn't happen.
         """
 
         if not isinstance(opcode, Word):
@@ -585,11 +585,46 @@ class Processor:
 
         self.program_counter += 2
 
+    def opcode_FX55(self, opcode: Word) -> None:
+        """The value of each variable register from V0 to VX inclusive (if X is 0, then
+        only V0) will be stored in successive memory addresses, starting with the one
+        that's stored in I. V0 will be stored at the address in I, V1 will be stored
+        in I + 1, and so on, until VX is stored in I + X.
+        """
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble().to_int()
+
+        for i in range(registry_x + 1):
+            self.memory[self.index_registry + i] = self.registry[i]
+
+        self.program_counter += 2
+
+    def opcode_FX65(self, opcode: Word) -> None:
+        """The values of each variable register from V0 to VX inclusive (if X is 0, then
+        only V0) will be filled with values from memory addresses starting with the one
+        that's stored in I. V0 will be filled with the value in the address in I, V1 will
+        be filled with the value in I + 1, and so on, until VX is filled with the value
+        in I + X.
+        """
+
+        if not isinstance(opcode, Word):
+            opcode = Word(opcode)
+
+        registry_x = opcode.get_second_nibble().to_int()
+
+        for i in range(registry_x + 1):
+            self.registry[i] = self.memory[self.index_registry + i]
+
+        self.program_counter += 2
+
     def cycle(self) -> None:
         # Fetch opcode
         opcode = self.fetch_opcode()
 
-        # Decode opcode
+        # Decode & execute the opcode
         match opcode & 0xF000:
             case 0x0000:
                 match opcode & 0x000F:
@@ -644,12 +679,36 @@ class Processor:
                 self.opcode_BNNN(opcode)
             case 0xC000:
                 self.opcode_CXNN(opcode)
+            case 0xD000:
+                self.opcode_DXYN(opcode)
+            case 0xE000:
+                match opcode & 0x00FF:
+                    case 0x009E:
+                        self.opcode_EX9E(opcode)
+                    case 0x00A1:
+                        self.opcode_EXA1(opcode)
+            case 0xF000:
+                match opcode & 0x00FF:
+                    case 0x0007:
+                        self.opcode_FX07(opcode)
+                    case 0x000A:
+                        self.opcode_FX0A(opcode)
+                    case 0x0015:
+                        self.opcode_FX15(opcode)
+                    case 0x0018:
+                        self.opcode_FX18(opcode)
+                    case 0x001E:
+                        self.opcode_FX1E(opcode)
+                    case 0x0029:
+                        self.opcode_FX29(opcode)
+                    case 0x0033:
+                        self.opcode_FX33(opcode)
+                    case 0x0055:
+                        self.opcode_FX55(opcode)
+                    case 0x0065:
+                        self.opcode_FX65(opcode)
 
-            # (0x3E44 & 0x0F00) >> 8
-        # Execute opcode
         # Update timers
-        self.execute_opcode(opcode)
-
         self.update_timers()
 
     def update_timers(self) -> None:
