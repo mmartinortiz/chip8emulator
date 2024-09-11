@@ -39,9 +39,6 @@ If you use VS Code, there are a bunch of recommended extensions that you can ins
 # Format code
 ruff format .
 
-# Sort imports
-ruff check --select I --fix
-
 # Testing
 pytest
 ```
@@ -49,4 +46,5 @@ pytest
 ## References
 
 - [How to write an emulator (CHIP-8 interpreter)](https://multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
+- [Guide to making a CHIP-8 emulator](https://tobiasvl.github.io/blog/write-a-chip-8-emulator/)
 - [CHIP 8 description](https://en.wikipedia.org/wiki/CHIP-8#Virtual_machine_description)
