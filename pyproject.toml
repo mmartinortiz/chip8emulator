@@ -5,9 +5,13 @@ description = "An emulator of CHIP-8"
 authors = ["manolo <mmartinortiz@gmail.com>"]
 readme = "README.md"
 
+[tool.poetry.scripts]
+chip8emulator = "chip8emulator.chip8emulator:main"
+
 [tool.poetry.dependencies]
 python = "^3.12"
 loguru = "^0.7.2"
+arcade = "^2.6.17"
 
 [tool.poetry.group.dev.dependencies]
 tox = "^4"
