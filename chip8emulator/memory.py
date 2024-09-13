@@ -1,14 +1,14 @@
 from collections import UserDict
 
-from chip8emulator.types import Word
+from chip8emulator.types import Byte, Word
 
 
 class Memory(UserDict):
-    def __init__(self, size: int = 4096):
-        self.size = size
-        self.memory = [0] * size
+    def __init__(self):
+        self.size = 4096
+        self.memory = [Byte(0)] * self.size
 
-    def _validate_address(self, address: int) -> bool:
+    def _validate_address(self, address: int | Word) -> bool:
         if 0x0000 < address > self.size:
             raise ValueError(f"Memory address {address} is not valid")
 
@@ -22,7 +22,7 @@ class Memory(UserDict):
 
         return self.memory[address]
 
-    def __setitem__(self, address: int, value: bytes | int) -> int:
+    def __setitem__(self, address: int | Word, value: bytes | int) -> Byte:
         self._validate_address(address)
 
         if isinstance(value, bytes) and len(value) > 1:
@@ -31,6 +31,9 @@ class Memory(UserDict):
         if isinstance(value, int) and value.bit_length() > 8:
             raise ValueError(f"Value too large: {value.bit_length()} bits")
 
-        self.memory[address] = value
+        if isinstance(value, bytes):
+            value = int.from_bytes(value, byteorder="big")
+
+        self.memory[address] = Byte(int(value))
 
         return self.memory[address]
