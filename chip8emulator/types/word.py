@@ -41,6 +41,9 @@ class Word:
     def get_fourth_nibble(self) -> Nibble:
         return Nibble(self.value & 0x000F)
 
+    def from_bytes(self, high_byte: Byte, low_byte: Byte) -> None:
+        self.value = (high_byte.value << 8) | low_byte.value
+
     def __add__(self, other: "Word") -> "Word":
         if not isinstance(other, (int, Word)):
             return NotImplemented
@@ -100,3 +103,17 @@ class Word:
 
     def __repr__(self) -> str:
         return hex(self.value)
+
+    def __lshift__(self, other: int) -> "Word":
+        if not isinstance(other, int):
+            return NotImplemented
+
+        result = self.value << other
+        return Word(result & 0xFFFF)
+
+    def __rshift__(self, other: int) -> "Word":
+        if not isinstance(other, int):
+            return NotImplemented
+
+        result = self.value >> other
+        return Word(result & 0xFFFF)

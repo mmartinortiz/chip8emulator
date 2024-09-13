@@ -114,3 +114,17 @@ class Byte:
 
     def __repr__(self) -> str:
         return hex(self.value)
+
+    def __lshift__(self, other) -> "Byte":
+        if not isinstance(other, int):
+            return NotImplemented
+
+        result = self.value << other
+        return Byte(result & 0xFF)
+
+    def __rshift__(self, other) -> "Byte":
+        if not isinstance(other, int):
+            return NotImplemented
+
+        result = self.value >> other
+        return Byte(result & 0xFF)

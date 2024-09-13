@@ -97,3 +97,29 @@ def test_byte_init(value, expected):
 )
 def test_byte_and(a, b, expected):
     assert (a & b) == expected
+
+
+@pytest.mark.parametrize(
+    "byte, shift, expected",
+    [
+        (Byte(0x01), 1, Byte(0x02)),
+        (Byte(0x01), 2, Byte(0x04)),
+        (Byte(0x80), 1, Byte(0x00)),
+        (Byte(0xFF), 4, Byte(0xF0)),
+    ],
+)
+def test_byte_lshift(byte, shift, expected):
+    assert (byte << shift) == expected
+
+
+@pytest.mark.parametrize(
+    "byte, shift, expected",
+    [
+        (Byte(0x80), 1, Byte(0x40)),
+        (Byte(0xFF), 2, Byte(0x3F)),
+        (Byte(0x01), 1, Byte(0x00)),
+        (Byte(0xF0), 4, Byte(0x0F)),
+    ],
+)
+def test_byte_rshift(byte, shift, expected):
+    assert (byte >> shift) == expected

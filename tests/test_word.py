@@ -87,3 +87,29 @@ def test_word_lt(a, b, expected):
 def test_word_init(value, expected):
     word = Word(value)
     assert word.value == expected
+
+
+@pytest.mark.parametrize(
+    "word, shift, expected",
+    [
+        (Word(0x0001), 1, Word(0x0002)),
+        (Word(0x0001), 2, Word(0x0004)),
+        (Word(0x0080), 1, Word(0x0100)),
+        (Word(0xFFFF), 1, Word(0xFFFE)),
+    ],
+)
+def test_word_lshift(word, shift, expected):
+    assert (word << shift) == expected
+
+
+@pytest.mark.parametrize(
+    "word, shift, expected",
+    [
+        (Word(0x0001), 1, Word(0x0000)),
+        (Word(0x0001), 2, Word(0x0000)),
+        (Word(0x0080), 1, Word(0x0040)),
+        (Word(0xFFFF), 1, Word(0x7FFF)),
+    ],
+)
+def test_word_rshift(word, shift, expected):
+    assert (word >> shift) == expected
