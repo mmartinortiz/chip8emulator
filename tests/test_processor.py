@@ -22,15 +22,16 @@ def processor():
 @pytest.mark.parametrize(
     "memory_content, program_counter, expected_opcode",
     [
-        ([0xA1, 0x23], 0, 0xA123),
-        ([0xA1, 0x23, 0x56, 0x78], 0, 0xA123),
-        ([0xA1, 0x23, 0x56, 0x78], 1, 0x2356),
-        ([0xA1, 0x23, 0x56, 0x78], 2, 0x5678),
+        ([0xA1, 0x23], 0, Word(0xA123)),
+        ([0xA1, 0x00], 0, Word(0xA100)),
+        ([0xA1, 0x23, 0x56, 0x78], 0, Word(0xA123)),
+        ([0xA1, 0x23, 0x56, 0x78], 1, Word(0x2356)),
+        ([0xA1, 0x23, 0x56, 0x78], 2, Word(0x5678)),
     ],
 )
 def test_fetch_opcode(memory_content, program_counter, expected_opcode, processor):
     # Set up a test case with a specific opcode
-    processor.memory = memory_content
+    processor.memory = [Byte(byte) for byte in memory_content]
     processor.program_counter = program_counter
 
     # Call the fetch_opcode method
@@ -54,7 +55,7 @@ def test_load_program(program_content, processor):
         processor.load_program(Path(temp_file.name))
 
         for i, byte in enumerate(program_content):
-            assert processor.memory[0x000 + i] == byte.to_bytes()
+            assert processor.memory[0x200 + i] == Byte(byte)
 
 
 @pytest.mark.parametrize("opcode, expected_registers", [(Word(0xA333), Word(0x0333))])

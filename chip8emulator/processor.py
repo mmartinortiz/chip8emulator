@@ -110,24 +110,28 @@ class Processor:
         if not program.exists():
             raise FileNotFoundError(f"Program file {program} not found")
         with program.open("rb") as f:
-            pointer = 0x000
+            pointer = 0x200
             while chunk := f.read(1):
                 self.memory[pointer] = chunk
                 pointer += 1
 
     def fetch_opcode(self) -> Word:
-        opcode = (
-            self.memory[self.program_counter] << 8
-            | self.memory[self.program_counter + 1]
+        opcode = Word(
+            self.memory[self.program_counter].value << 8
+            | self.memory[self.program_counter + 1].value
         )
         return opcode
 
+    def opcode_0NNN(self, opcode: Word) -> None:
+        pass
+
     def opcode_00E0(self) -> None:
         """Clear screen"""
-        # TODO: Clear screen
-        ...
+        self.graphics.clear()
 
-    def opcode_000E(self) -> None:
+        self.program_counter += 2
+
+    def opcode_00EE(self) -> None:
         # Restore the program counter
         self.program_counter = self.stack[self.stack_pointer]
 
@@ -449,13 +453,13 @@ class Processor:
         registry_y = opcode.get_third_nibble()
         height = opcode.get_fourth_nibble()
 
-        x = self.registry[registry_x]
-        y = self.registry[registry_y]
+        x = self.registry[registry_x].value
+        y = self.registry[registry_y].value
 
         self.carry_flag = 0
 
         for y_line in range(0, height.value):
-            pixel = self.memory[self.index_registry + y_line]
+            pixel = self.memory[self.index_registry + y_line].value
 
             for x_line in range(0, 8):
                 # Check if the bit of the pixel to be drawn is set to 1
@@ -624,17 +628,17 @@ class Processor:
         # Fetch opcode
         opcode = self.fetch_opcode()
 
+        # logger.debug((opcode, self.memory[self.program_counter], self.memory[self.program_counter + 1]))
         # Decode & execute the opcode
-        match opcode & 0xF000:
-            case 0x0000:
-                match opcode & 0x000F:
-                    case 0x0000:
-                        # Clear the screen
+        match opcode & 0x00E0:
+            case 0x00E0:
+                match opcode & 0x00EE:
+                    case 0x00EE:
+                        self.opcode_00EE()
+                    case _:
                         self.opcode_00E0()
-                    case 0x000E:
-                        # Returns from a subroutine
-                        self.opcode_000E()
 
+        match opcode & 0xF000:
             case 0x1000:
                 # Jump to address NNN
                 self.opcode_1NNN(opcode)
