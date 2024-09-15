@@ -106,7 +106,7 @@ class Processor:
 
         # Stack
         self.stack = [Word(0)] * 16
-        self.stack_pointer = Word(0)
+        self.stack_pointer = 0
 
     def load_program(self, program: Path) -> None:
         if not program.exists():
@@ -177,7 +177,7 @@ class Processor:
         address = opcode & 0x0FFF
         self.program_counter = address
 
-    def opcode_3NNN(self, opcode: Word) -> None:
+    def opcode_3XNN(self, opcode: Word) -> None:
         """
         Skips the next instruction if VX equals NN (usually the next instruction is
         a jump to skip a code block)
@@ -193,8 +193,11 @@ class Processor:
 
         if self.registry[registry] == value:
             self.program_counter += 4
+            return
 
-    def opcode_4NNN(self, opcode: Word) -> None:
+        self.program_counter += 2
+
+    def opcode_4XNN(self, opcode: Word) -> None:
         """
         Skips the next instruction if VX does not equal NN (usually the next instruction
         is a jump to skip a code block)
@@ -211,6 +214,9 @@ class Processor:
 
         if self.registry[registry] != value:
             self.program_counter += 4
+            return
+
+        self.program_counter += 2
 
     def opcode_5XY0(self, opcode: Word) -> None:
         """
@@ -231,6 +237,9 @@ class Processor:
 
         if self.registry[registry_x] == self.registry[registry_y]:
             self.program_counter += 4
+            return
+
+        self.program_counter += 2
 
     def opcode_6XNN(self, opcode: Word) -> None:
         """Sets VX to NN"""
