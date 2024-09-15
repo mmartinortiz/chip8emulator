@@ -3,9 +3,11 @@ from collections import UserDict
 from pathlib import Path
 from typing import List
 
+from chip8emulator.decoder import decode
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
 from chip8emulator.memory import Memory
+from chip8emulator.opcodes import OPCODE
 from chip8emulator.types import Byte, Nibble, Word
 
 
@@ -104,30 +106,34 @@ class Processor:
 
         # Stack
         self.stack = [Word(0)] * 16
-        self.stack_pointer = Word(0)
+        self.stack_pointer = 0
 
     def load_program(self, program: Path) -> None:
         if not program.exists():
             raise FileNotFoundError(f"Program file {program} not found")
         with program.open("rb") as f:
-            pointer = 0x000
+            pointer = 0x200
             while chunk := f.read(1):
                 self.memory[pointer] = chunk
                 pointer += 1
 
     def fetch_opcode(self) -> Word:
-        opcode = (
-            self.memory[self.program_counter] << 8
-            | self.memory[self.program_counter + 1]
+        opcode = Word(
+            self.memory[self.program_counter].value << 8
+            | self.memory[self.program_counter + 1].value
         )
         return opcode
 
+    def opcode_0NNN(self, opcode: Word) -> None:
+        pass
+
     def opcode_00E0(self) -> None:
         """Clear screen"""
-        # TODO: Clear screen
-        ...
+        self.graphics.clear()
 
-    def opcode_000E(self) -> None:
+        self.program_counter += 2
+
+    def opcode_00EE(self) -> None:
         # Restore the program counter
         self.program_counter = self.stack[self.stack_pointer]
 
@@ -171,7 +177,7 @@ class Processor:
         address = opcode & 0x0FFF
         self.program_counter = address
 
-    def opcode_3NNN(self, opcode: Word) -> None:
+    def opcode_3XNN(self, opcode: Word) -> None:
         """
         Skips the next instruction if VX equals NN (usually the next instruction is
         a jump to skip a code block)
@@ -187,8 +193,11 @@ class Processor:
 
         if self.registry[registry] == value:
             self.program_counter += 4
+            return
 
-    def opcode_4NNN(self, opcode: Word) -> None:
+        self.program_counter += 2
+
+    def opcode_4XNN(self, opcode: Word) -> None:
         """
         Skips the next instruction if VX does not equal NN (usually the next instruction
         is a jump to skip a code block)
@@ -205,6 +214,9 @@ class Processor:
 
         if self.registry[registry] != value:
             self.program_counter += 4
+            return
+
+        self.program_counter += 2
 
     def opcode_5XY0(self, opcode: Word) -> None:
         """
@@ -225,6 +237,9 @@ class Processor:
 
         if self.registry[registry_x] == self.registry[registry_y]:
             self.program_counter += 4
+            return
+
+        self.program_counter += 2
 
     def opcode_6XNN(self, opcode: Word) -> None:
         """Sets VX to NN"""
@@ -449,13 +464,13 @@ class Processor:
         registry_y = opcode.get_third_nibble()
         height = opcode.get_fourth_nibble()
 
-        x = self.registry[registry_x]
-        y = self.registry[registry_y]
+        x = self.registry[registry_x].value
+        y = self.registry[registry_y].value
 
         self.carry_flag = 0
 
         for y_line in range(0, height.value):
-            pixel = self.memory[self.index_registry + y_line]
+            pixel = self.memory[self.index_registry + y_line].value
 
             for x_line in range(0, 8):
                 # Check if the bit of the pixel to be drawn is set to 1
@@ -625,88 +640,77 @@ class Processor:
         opcode = self.fetch_opcode()
 
         # Decode & execute the opcode
-        match opcode & 0xF000:
-            case 0x0000:
-                match opcode & 0x000F:
-                    case 0x0000:
-                        # Clear the screen
-                        self.opcode_00E0()
-                    case 0x000E:
-                        # Returns from a subroutine
-                        self.opcode_000E()
-
-            case 0x1000:
-                # Jump to address NNN
+        match decode(opcode):
+            case OPCODE.x0NNN:
+                self.opcode_0NNN(opcode)
+            case OPCODE.x00E0:
+                self.opcode_00E0()
+            case OPCODE.x00EE:
+                self.opcode_00EE()
+            case OPCODE.x1NNN:
                 self.opcode_1NNN(opcode)
-            case 0x2000:
-                # Call to subroutine at NNN
+            case OPCODE.x2NNN:
                 self.opcode_2NNN(opcode)
-            case 0x3000:
-                self.opcode_3NNN(opcode)
-            case 0x4000:
-                self.opcode_4NNN(opcode)
-            case 0x5000:
+            case OPCODE.x3XNN:
+                self.opcode_3XNN(opcode)
+            case OPCODE.x4XNN:
+                self.opcode_4XNN(opcode)
+            case OPCODE.x5XY0:
                 self.opcode_5XY0(opcode)
-            case 0x6000:
+            case OPCODE.x6XNN:
                 self.opcode_6XNN(opcode)
-            case 0x7000:
+            case OPCODE.x7XNN:
                 self.opcode_7XNN(opcode)
-            case 0x8000:
-                match opcode & 0x000F:
-                    case 0x0000:
-                        self.opcode_8XY0(opcode)
-                    case 0x0001:
-                        self.opcode_8XY1(opcode)
-                    case 0x0002:
-                        self.opcode_8XY2(opcode)
-                    case 0x0003:
-                        self.opcode_8XY3(opcode)
-                    case 0x0004:
-                        self.opcode_8XY4(opcode)
-                    case 0x005:
-                        self.opcode_8XY5(opcode)
-                    case 0x0006:
-                        self.opcode_8XY6(opcode)
-                    case 0x0007:
-                        self.opcode_8XY7(opcode)
-                    case 0x000E:
-                        self.opcode_8XYE(opcode)
-            case 0x900:
+            case OPCODE.x8XY0:
+                self.opcode_8XY0(opcode)
+            case OPCODE.x8XY1:
+                self.opcode_8XY1(opcode)
+            case OPCODE.x8XY2:
+                self.opcode_8XY2(opcode)
+            case OPCODE.x8XY3:
+                self.opcode_8XY3(opcode)
+            case OPCODE.x8XY4:
+                self.opcode_8XY4(opcode)
+            case OPCODE.x8XY5:
+                self.opcode_8XY5(opcode)
+            case OPCODE.x8XY6:
+                self.opcode_8XY6(opcode)
+            case OPCODE.x8XY7:
+                self.opcode_8XY7(opcode)
+            case OPCODE.x8XYE:
+                self.opcode_8XYE(opcode)
+            case OPCODE.x9XY0:
                 self.opcode_9XY0(opcode)
-            case 0xA000:
+            case OPCODE.xANNN:
                 self.opcode_ANNN(opcode)
-            case 0xB000:
+            case OPCODE.xBNNN:
                 self.opcode_BNNN(opcode)
-            case 0xC000:
+            case OPCODE.xCXNN:
                 self.opcode_CXNN(opcode)
-            case 0xD000:
+            case OPCODE.xDXYN:
                 self.opcode_DXYN(opcode)
-            case 0xE000:
-                match opcode & 0x00FF:
-                    case 0x009E:
-                        self.opcode_EX9E(opcode)
-                    case 0x00A1:
-                        self.opcode_EXA1(opcode)
-            case 0xF000:
-                match opcode & 0x00FF:
-                    case 0x0007:
-                        self.opcode_FX07(opcode)
-                    case 0x000A:
-                        self.opcode_FX0A(opcode)
-                    case 0x0015:
-                        self.opcode_FX15(opcode)
-                    case 0x0018:
-                        self.opcode_FX18(opcode)
-                    case 0x001E:
-                        self.opcode_FX1E(opcode)
-                    case 0x0029:
-                        self.opcode_FX29(opcode)
-                    case 0x0033:
-                        self.opcode_FX33(opcode)
-                    case 0x0055:
-                        self.opcode_FX55(opcode)
-                    case 0x0065:
-                        self.opcode_FX65(opcode)
+            case OPCODE.xEX9E:
+                self.opcode_EX9E(opcode)
+            case OPCODE.xEXA1:
+                self.opcode_EXA1(opcode)
+            case OPCODE.xFX07:
+                self.opcode_FX07(opcode)
+            case OPCODE.xFX0A:
+                self.opcode_FX0A(opcode)
+            case OPCODE.xFX15:
+                self.opcode_FX15(opcode)
+            case OPCODE.xFX18:
+                self.opcode_FX18(opcode)
+            case OPCODE.xFX1E:
+                self.opcode_FX1E(opcode)
+            case OPCODE.xFX29:
+                self.opcode_FX29(opcode)
+            case OPCODE.xFX33:
+                self.opcode_FX33(opcode)
+            case OPCODE.xFX55:
+                self.opcode_FX55(opcode)
+            case OPCODE.xFX65:
+                self.opcode_FX65(opcode)
 
         # Update timers
         self.update_timers()

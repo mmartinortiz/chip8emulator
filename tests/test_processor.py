@@ -22,15 +22,16 @@ def processor():
 @pytest.mark.parametrize(
     "memory_content, program_counter, expected_opcode",
     [
-        ([0xA1, 0x23], 0, 0xA123),
-        ([0xA1, 0x23, 0x56, 0x78], 0, 0xA123),
-        ([0xA1, 0x23, 0x56, 0x78], 1, 0x2356),
-        ([0xA1, 0x23, 0x56, 0x78], 2, 0x5678),
+        ([0xA1, 0x23], 0, Word(0xA123)),
+        ([0xA1, 0x00], 0, Word(0xA100)),
+        ([0xA1, 0x23, 0x56, 0x78], 0, Word(0xA123)),
+        ([0xA1, 0x23, 0x56, 0x78], 1, Word(0x2356)),
+        ([0xA1, 0x23, 0x56, 0x78], 2, Word(0x5678)),
     ],
 )
 def test_fetch_opcode(memory_content, program_counter, expected_opcode, processor):
     # Set up a test case with a specific opcode
-    processor.memory = memory_content
+    processor.memory = [Byte(byte) for byte in memory_content]
     processor.program_counter = program_counter
 
     # Call the fetch_opcode method
@@ -54,7 +55,7 @@ def test_load_program(program_content, processor):
         processor.load_program(Path(temp_file.name))
 
         for i, byte in enumerate(program_content):
-            assert processor.memory[0x000 + i] == byte.to_bytes()
+            assert processor.memory[0x200 + i] == Byte(byte)
 
 
 @pytest.mark.parametrize("opcode, expected_registers", [(Word(0xA333), Word(0x0333))])
@@ -64,11 +65,11 @@ def test_opcode_annnn(opcode, expected_registers, processor):
     assert processor.index_registry == expected_registers
 
 
-def test_opcode_000E(processor):
+def test_opcode_00EE(processor):
     processor.stack_pointer = 2
     processor.stack = [0x0000, 0x0001, 0x0002] + [0] * 13
     processor.program_counter = 0x111
-    processor.opcode_000E()
+    processor.opcode_00EE()
 
     # The stack pointer has been decreased
     assert processor.stack_pointer == 1
@@ -111,10 +112,10 @@ def test_opcode_2NNN(processor):
         # Registry value equal to opcode NN, program counter increased by 4
         ("V7", Byte(0x33), Word(0x0110), Word(0x3733), Word(0x0114)),
         # Registry value not equal to opcode NN, program counter not modified
-        ("VA", 0x22, 0x0110, 0x3A33, 0x0110),
+        ("VA", 0x22, 0x0110, 0x3A33, 0x0112),
     ],
 )
-def test_opcode_3NNN(
+def test_opcode_3XNN(
     processor,
     registry,
     registry_value,
@@ -124,7 +125,7 @@ def test_opcode_3NNN(
 ):
     processor.registry[registry] = registry_value
     processor.program_counter = program_counter
-    processor.opcode_3NNN(opcode)
+    processor.opcode_3XNN(opcode)
 
     assert processor.program_counter == expected_program_counter
 
@@ -133,12 +134,12 @@ def test_opcode_3NNN(
     "registry, registry_value, program_counter, opcode, expected_program_counter",
     [
         # Registry value equal to opcode NN, program counter not modified
-        ("V7", 0x33, 0x0110, 0x3733, 0x0110),
+        ("V7", 0x33, 0x0110, 0x3733, 0x0112),
         # Registry value not equal to opcode NN, program counter increased by 4
         ("VA", 0x22, 0x0110, 0x3A33, 0x0114),
     ],
 )
-def test_opcode_4NNN(
+def test_opcode_4XNN(
     processor,
     registry,
     registry_value,
@@ -148,7 +149,7 @@ def test_opcode_4NNN(
 ):
     processor.registry[registry] = registry_value
     processor.program_counter = program_counter
-    processor.opcode_4NNN(opcode)
+    processor.opcode_4XNN(opcode)
 
     assert processor.program_counter == expected_program_counter
 
@@ -159,10 +160,10 @@ def test_opcode_4NNN(
         # Registry X equal to registry Y, program counter increased by 4
         ("V7", 0x33, "VA", 0x33, 0x0110, 0x57A0, 0x0114),
         # Registry X not equal to registry Y, program counter not modified
-        ("V7", 0x33, "VA", 0x22, 0x0110, 0x57A0, 0x0110),
+        ("V7", 0x33, "VA", 0x22, 0x0110, 0x57A0, 0x0112),
     ],
 )
-def test_opcode_5NNN(
+def test_opcode_5XYN(
     processor,
     registry_x,
     registry_x_value,
@@ -407,8 +408,8 @@ def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
             4,
             5,
             3,
-            1,
-            1,
+            Nibble(0x1),
+            Nibble(0x1),
             1,
             [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
             [list(0 for _ in range(10)) for _ in range(6)],
@@ -426,8 +427,8 @@ def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
             4,
             5,
             3,
-            1,
-            1,
+            Nibble(0x1),
+            Nibble(0x1),
             1,
             [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
             # For the current state of the pixels, we expect a collision.
