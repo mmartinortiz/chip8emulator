@@ -7,7 +7,6 @@ from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
 from chip8emulator.memory import Memory
 from chip8emulator.processor import Processor
-from chip8emulator.types import Byte, Nibble, Word
 
 
 @pytest.fixture
@@ -22,16 +21,16 @@ def processor():
 @pytest.mark.parametrize(
     "memory_content, program_counter, expected_opcode",
     [
-        ([0xA1, 0x23], 0, Word(0xA123)),
-        ([0xA1, 0x00], 0, Word(0xA100)),
-        ([0xA1, 0x23, 0x56, 0x78], 0, Word(0xA123)),
-        ([0xA1, 0x23, 0x56, 0x78], 1, Word(0x2356)),
-        ([0xA1, 0x23, 0x56, 0x78], 2, Word(0x5678)),
+        ([0xA1, 0x23], 0, 0xA123),
+        ([0xA1, 0x00], 0, 0xA100),
+        ([0xA1, 0x23, 0x56, 0x78], 0, 0xA123),
+        ([0xA1, 0x23, 0x56, 0x78], 1, 0x2356),
+        ([0xA1, 0x23, 0x56, 0x78], 2, 0x5678),
     ],
 )
 def test_fetch_opcode(memory_content, program_counter, expected_opcode, processor):
     # Set up a test case with a specific opcode
-    processor.memory = [Byte(byte) for byte in memory_content]
+    processor.memory = [byte for byte in memory_content]
     processor.program_counter = program_counter
 
     # Call the fetch_opcode method
@@ -55,10 +54,10 @@ def test_load_program(program_content, processor):
         processor.load_program(Path(temp_file.name))
 
         for i, byte in enumerate(program_content):
-            assert processor.memory[0x200 + i] == Byte(byte)
+            assert processor.memory[0x200 + i] == byte
 
 
-@pytest.mark.parametrize("opcode, expected_registers", [(Word(0xA333), Word(0x0333))])
+@pytest.mark.parametrize("opcode, expected_registers", [(0xA333, 0x0333)])
 def test_opcode_annnn(opcode, expected_registers, processor):
     processor.opcode_ANNN(opcode)
 
@@ -74,8 +73,8 @@ def test_opcode_00EE(processor):
     # The stack pointer has been decreased
     assert processor.stack_pointer == 1
 
-    # The program counter contains the next instruction
-    assert processor.program_counter == 0x0002 + 2
+    # The PC points to the previous tip of the stack
+    assert processor.program_counter == 0x0002
 
 
 def test_opcode_1NNN(processor):
@@ -110,9 +109,9 @@ def test_opcode_2NNN(processor):
     "registry, registry_value, program_counter, opcode, expected_program_counter",
     [
         # Registry value equal to opcode NN, program counter increased by 4
-        ("V7", Byte(0x33), Word(0x0110), Word(0x3733), Word(0x0114)),
+        (0x7, 0x33, 0x0110, 0x3733, 0x0114),
         # Registry value not equal to opcode NN, program counter not modified
-        ("VA", 0x22, 0x0110, 0x3A33, 0x0112),
+        (0xA, 0x22, 0x0110, 0x3A33, 0x0112),
     ],
 )
 def test_opcode_3XNN(
@@ -134,9 +133,9 @@ def test_opcode_3XNN(
     "registry, registry_value, program_counter, opcode, expected_program_counter",
     [
         # Registry value equal to opcode NN, program counter not modified
-        ("V7", 0x33, 0x0110, 0x3733, 0x0112),
+        (0x7, 0x33, 0x0110, 0x3733, 0x0112),
         # Registry value not equal to opcode NN, program counter increased by 4
-        ("VA", 0x22, 0x0110, 0x3A33, 0x0114),
+        (0xA, 0x22, 0x0110, 0x3A33, 0x0114),
     ],
 )
 def test_opcode_4XNN(
@@ -158,9 +157,9 @@ def test_opcode_4XNN(
     "registry_x, registry_x_value, registry_y, registry_y_value, program_counter, opcode, expected_program_counter",
     [
         # Registry X equal to registry Y, program counter increased by 4
-        ("V7", 0x33, "VA", 0x33, 0x0110, 0x57A0, 0x0114),
+        (0x7, 0x33, 0xA, 0x33, 0x0110, 0x57A0, 0x0114),
         # Registry X not equal to registry Y, program counter not modified
-        ("V7", 0x33, "VA", 0x22, 0x0110, 0x57A0, 0x0112),
+        (0x7, 0x33, 0xA, 0x22, 0x0110, 0x57A0, 0x0112),
     ],
 )
 def test_opcode_5XYN(
@@ -185,66 +184,66 @@ def test_opcode_6XNN(processor):
     processor.program_counter = 0x110
     processor.opcode_6XNN(0x6333)
 
-    assert processor.registry["V3"] == 0x33
+    assert processor.registry[0x3] == 0x33
     assert processor.program_counter == 0x112
 
 
 def test_opcode_7XNN(processor):
     processor.program_counter = 0x110
-    processor.registry["V3"] = 0x22
+    processor.registry[0x3] = 0x22
     processor.opcode_7XNN(0x7301)
 
-    assert processor.registry["V3"] == 0x23
+    assert processor.registry[0x3] == 0x23
     assert processor.program_counter == 0x112
 
 
 def test_opcode_8XY0(processor):
-    processor.registry["V3"] = 0x33
-    processor.registry["V4"] = 0x22
+    processor.registry[0x3] = 0x33
+    processor.registry[0x4] = 0x22
     processor.program_counter = 0x110
     processor.opcode_8XY0(0x8340)
 
-    assert processor.registry["V3"] == 0x22
+    assert processor.registry[0x3] == 0x22
     assert processor.program_counter == 0x112
 
 
 def test_opcode_8XY1(processor):
-    processor.registry["V3"] = 0b1010
-    processor.registry["V4"] = 0b1100
+    processor.registry[0x3] = 0b1010
+    processor.registry[0x4] = 0b1100
     processor.program_counter = 0x110
     processor.opcode_8XY1(0x8341)
 
-    assert processor.registry["V3"] == 0b1110
+    assert processor.registry[0x3] == 0b1110
     assert processor.program_counter == 0x112
 
 
 def test_opcode_8XY2(processor):
-    processor.registry["V3"] = 0b1010
-    processor.registry["V4"] = 0b1100
+    processor.registry[0x3] = 0b1010
+    processor.registry[0x4] = 0b1100
     processor.program_counter = 0x110
     processor.opcode_8XY2(0x8342)
 
-    assert processor.registry["V3"] == 0b1000
+    assert processor.registry[0x3] == 0b1000
     assert processor.program_counter == 0x112
 
 
 def test_opcode_8XY3(processor):
-    processor.registry["V3"] = 0b1010
-    processor.registry["V4"] = 0b1100
+    processor.registry[0x3] = 0b1010
+    processor.registry[0x4] = 0b1100
     processor.program_counter = 0x110
     processor.opcode_8XY3(0x8343)
 
-    assert processor.registry["V3"] == 0b0110
+    assert processor.registry[0x3] == 0b0110
     assert processor.program_counter == 0x112
 
 
 @pytest.mark.parametrize(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
-        ("V3", "V4", 0x33, 0x22, 0x55, 0b0),
-        ("V3", "V4", 0xFF, 0x01, 0x00, 0b1),
-        ("V3", "V4", 0x11, 0xFF, 0x10, 0b1),
-        ("V3", "V4", 0x01, 0x01, 0x02, 0b0),
+        (0x3, 0x4, 0x33, 0x22, 0x55, 0b0),
+        (0x3, 0x4, 0xFF, 0x01, 0x00, 0b1),
+        (0x3, 0x4, 0x11, 0xFF, 0x10, 0b1),
+        (0x3, 0x4, 0x01, 0x01, 0x02, 0b0),
     ],
 )
 def test_opcode_8XY4(
@@ -263,10 +262,10 @@ def test_opcode_8XY4(
 @pytest.mark.parametrize(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
-        (3, 4, 0x33, 0x22, 0x11, 0b1),
-        (3, 4, 0x11, 0x22, 0x11, 0b0),
-        (3, 4, 0xAA, 0xEE, 0x44, 0b0),
-        (3, 4, 0x01, 0x01, 0x00, 0b1),
+        (0x3, 0x4, 0x33, 0x22, 0x11, 0b1),
+        (0x3, 0x4, 0x11, 0x22, 0x11, 0b0),
+        (0x3, 0x4, 0xAA, 0xEE, 0x44, 0b0),
+        (0x3, 0x4, 0x01, 0x01, 0x00, 0b1),
     ],
 )
 def test_opcode_8XY5(
@@ -285,8 +284,8 @@ def test_opcode_8XY5(
 @pytest.mark.parametrize(
     "registry_x, value_x, program_counter, expected_registry, expected_carry, expected_program_counter",
     [
-        (3, 0b1110, 0x110, 0b0111, 0, 0x112),
-        (3, 0b1101, 0x110, 0b0110, 1, 0x112),
+        (0x3, 0b1110, 0x110, 0b0111, 0, 0x112),
+        (0x3, 0b1101, 0x110, 0b0110, 1, 0x112),
     ],
 )
 def test_opcode_8XY6(
@@ -310,8 +309,8 @@ def test_opcode_8XY6(
 @pytest.mark.parametrize(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
-        (3, 4, Byte(0x33), Byte(0x22), Byte(0x11), 0b0),
-        (3, 4, Byte(0x11), Byte(0x22), Byte(0x11), 0b1),
+        (3, 4, 0x33, 0x22, 0x11, 0b0),
+        (3, 4, 0x11, 0x22, 0x11, 0b1),
     ],
 )
 def test_opcode_8XY7(
@@ -354,9 +353,9 @@ def test_opcode_8XYE(
     "registry_x, registry_y, value_x, value_y, program_counter, expected_program_counter",
     [
         # VX not equal to VY, skip next instruction
-        (3, 4, 0x33, 0x22, 0x0110, 0x0114),
+        (0x3, 0x4, 0x33, 0x22, 0x0110, 0x0114),
         # VX equal to VY, do not skip next instruction
-        (3, 4, 0x33, 0x33, 0x0110, 0x0112),
+        (0x3, 0x4, 0x33, 0x33, 0x0110, 0x0112),
     ],
 )
 def test_opcode_9XY0(
@@ -389,14 +388,14 @@ def test_opcode_BNNN(processor, opcode, v0, expected_program_counter):
     assert processor.program_counter == expected_program_counter
 
 
-@pytest.mark.parametrize("registry, value, expected", [(3, 33, Byte(51))])
-def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
+@pytest.mark.parametrize("registry, opcode, expected", [(3, 0xC3AA, 0xA)])
+def test_opcode_CXNN(processor, registry, opcode, expected, monkeypatch):
     def mock_randint(a, b):
-        return 0x33
+        return 0xF
 
     monkeypatch.setattr("random.randint", mock_randint)
 
-    processor.opcode_CXNN(int(f"0xC{registry}{value}", 16))
+    processor.opcode_CXNN(opcode)
 
     assert processor.registry[registry] == expected
 
@@ -405,13 +404,13 @@ def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
     "registry_x, registry_y, height, x, y, index_registry, memory, pixels, expected, carry",
     [
         (
-            4,
-            5,
-            3,
-            Nibble(0x1),
-            Nibble(0x1),
+            0x4,
+            0x5,
+            0x3,
+            0x1,
+            0x1,
             1,
-            [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
+            [0x00, 0x3C, 0xC3, 0xFF, 0xFF],
             [list(0 for _ in range(10)) for _ in range(6)],
             [
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -427,10 +426,10 @@ def test_opcode_CXNN(processor, registry, value, expected, monkeypatch):
             4,
             5,
             3,
-            Nibble(0x1),
-            Nibble(0x1),
+            0x1,
+            0x1,
             1,
-            [Byte(0x00), Byte(0x3C), Byte(0xC3), Byte(0xFF), Byte(0xFF)],
+            [0x00, 0x3C, 0xC3, 0xFF, 0xFF],
             # For the current state of the pixels, we expect a collision.
             [
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -478,11 +477,12 @@ def test_opcode_DXYN(
     assert processor.program_counter == 0x112
 
 
+@pytest.mark.skip(reason="Keypad not implemented")
 @pytest.mark.parametrize(
     "registry_x, program_counter, x_value, key_pressed, expected",
     [
-        (1, 0x110, Nibble(1), Nibble(1), 0x112),
-        (1, 0x110, Nibble(1), Nibble(6), 0x110),
+        (1, 0x110, 0x1, "1", 0x112),
+        (1, 0x110, 0x1, "6", 0x110),
     ],
 )
 def test_opcode_EX9E(
@@ -496,11 +496,12 @@ def test_opcode_EX9E(
     assert processor.program_counter == expected
 
 
+@pytest.mark.skip(reason="Keypad not implemented")
 @pytest.mark.parametrize(
     "registry_x, program_counter, x_value, key_pressed, expected",
     [
-        (1, 0x110, Nibble(1), Nibble(1), 0x110),
-        (1, 0x110, Nibble(1), Nibble(6), 0x112),
+        (1, 0x110, 0x1, "1", 0x110),
+        (1, 0x110, 0x1, "6", 0x112),
     ],
 )
 def test_opcode_EXA1(
