@@ -1,81 +1,17 @@
 import random
-from collections import UserDict
 from pathlib import Path
-from typing import List
 
 from chip8emulator.decoder import decode
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
 from chip8emulator.memory import Memory
-from chip8emulator.opcodes import OPCODE
-from chip8emulator.types import Byte, Nibble, Word
-
-
-class Registry(UserDict):
-    def __init__(self, values: List[Byte] = None):
-        if not values:
-            values = [Byte(0)] * 15
-
-        self.data = {k: v for k, v in enumerate(values)}
-        self.draw_flag = False
-        super().__init__(self.data)
-
-    def __transform_key(self, key: str | int | Nibble) -> int:
-        """
-        Transforms the given key into its corresponding value. The key can be a
-        an integer between 0 and 15, or a string starting with "V" followed by a
-        number indicating the registry, or a string with an uppercase letter
-        between A and F.
-
-
-        Args:
-            key (str): The key to be transformed.
-
-        Returns:
-            int: The transformed value of the key.
-
-        Raises:
-            ValueError: If the key is not a valid registry.
-
-        """
-        if isinstance(key, int):
-            return key
-
-        if isinstance(key, Nibble):
-            return key.value
-
-        if key.lower().startswith("v"):
-            key = key[1]
-
-        if key.isdigit():
-            key = int(key)
-        elif key.upper() in "ABCDEF":
-            if key.upper() == "A":
-                key = 10
-            elif key.upper() == "B":
-                key = 11
-            elif key.upper() == "C":
-                key = 12
-            elif key.upper() == "D":
-                key = 13
-            elif key.upper() == "E":
-                key = 14
-            else:
-                raise ValueError(f"Unexpected registry {key}")
-
-        return key
-
-    def __contains__(self, key: str | int | Nibble) -> bool:
-        key = self.__transform_key(key)
-        return key in self.data
-
-    def __getitem__(self, key):
-        key = self.__transform_key(key)
-        return self.data[key]
-
-    def __setitem__(self, key, value):
-        key = self.__transform_key(key)
-        self.data[key] = value
+from chip8emulator.opcodes import (
+    OPCODE,
+    get_fourth_nibble,
+    get_low_byte,
+    get_second_nibble,
+    get_third_nibble,
+)
 
 
 class Processor:
@@ -84,29 +20,28 @@ class Processor:
         self.graphics = graphics
         self.keypad = keypad
 
-        self.registry = Registry()
         self.reset()
 
     def reset(self) -> None:
         # Registers
-        self.registry = Registry([Byte(0)] * 15)
+        self.registry = {k: v for k, v in enumerate([0] * 15)}
 
         # Also known as vF
-        self.carry_flag = Byte(0)
+        self.carry_flag = 0x0
 
         # Program counter
-        self.program_counter = Word(0x200)
+        self.program_counter = 0x200
 
         # Index registry
-        self.index_registry = Word(0)
+        self.index_registry = 0x0
 
         # Timers
-        self.sound_timer = 0
-        self.delay_timer = 0
+        self.sound_timer = 0x0
+        self.delay_timer = 0x0
 
         # Stack
-        self.stack = [Word(0)] * 16
-        self.stack_pointer = 0
+        self.stack = [0x0] * 16
+        self.stack_pointer = 0x0
 
     def load_program(self, program: Path) -> None:
         if not program.exists():
@@ -117,14 +52,14 @@ class Processor:
                 self.memory[pointer] = chunk
                 pointer += 1
 
-    def fetch_opcode(self) -> Word:
-        opcode = Word(
-            self.memory[self.program_counter].value << 8
-            | self.memory[self.program_counter + 1].value
+    def fetch_opcode(self) -> int:
+        opcode = (
+            self.memory[self.program_counter] << 8
+            | self.memory[self.program_counter + 1]
         )
         return opcode
 
-    def opcode_0NNN(self, opcode: Word) -> None:
+    def opcode_0NNN(self, opcode: int) -> None:
         pass
 
     def opcode_00E0(self) -> None:
@@ -134,16 +69,14 @@ class Processor:
         self.program_counter += 2
 
     def opcode_00EE(self) -> None:
-        # Restore the program counter
+        """Return from a subroutine. Restore the program counter to the address
+        pointed by the tip of the stack pointer and decrease the stack pointer."""
         self.program_counter = self.stack[self.stack_pointer]
 
         # Decrease the stack pointer
         self.stack_pointer -= 1
 
-        # Move to next instruction
-        self.program_counter += 2
-
-    def opcode_1NNN(self, opcode: Word) -> None:
+    def opcode_1NNN(self, opcode: int) -> None:
         """
         Jumps to address NNN
 
@@ -157,7 +90,7 @@ class Processor:
         address = opcode & 0x0FFF
         self.program_counter = address
 
-    def opcode_2NNN(self, opcode: Word):
+    def opcode_2NNN(self, opcode: int):
         """
         Call a subroutine at address NNN: This is a transfer of control to a subroutine
         (a separate block of code that performs a specific task). The processor saves
@@ -177,19 +110,17 @@ class Processor:
         address = opcode & 0x0FFF
         self.program_counter = address
 
-    def opcode_3XNN(self, opcode: Word) -> None:
+    def opcode_3XNN(self, opcode: int) -> None:
         """
         Skips the next instruction if VX equals NN (usually the next instruction is
         a jump to skip a code block)
         """
-        if isinstance(opcode, int):
-            opcode = Word(opcode)
-        registry = opcode.get_second_nibble()
+        registry = get_second_nibble(opcode)
 
         if registry not in self.registry.keys():
             raise ValueError(f"Unexpected value {registry}")
 
-        value = opcode.get_low_byte()
+        value = get_low_byte(opcode)
 
         if self.registry[registry] == value:
             self.program_counter += 4
@@ -197,20 +128,17 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_4XNN(self, opcode: Word) -> None:
+    def opcode_4XNN(self, opcode: int) -> None:
         """
         Skips the next instruction if VX does not equal NN (usually the next instruction
         is a jump to skip a code block)
         """
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry = opcode.get_second_nibble()
+        registry = get_second_nibble(opcode)
 
         if registry not in self.registry.keys():
             raise ValueError(f"Unexpected value {registry}")
 
-        value = opcode.get_low_byte()
+        value = get_low_byte(opcode)
 
         if self.registry[registry] != value:
             self.program_counter += 4
@@ -218,16 +146,13 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_5XY0(self, opcode: Word) -> None:
+    def opcode_5XY0(self, opcode: int) -> None:
         """
         Skips the next instruction if VX equals VY (usually the next instruction is a
         jump to skip a code block).
         """
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         if (
             registry_x not in self.registry.keys()
@@ -241,79 +166,59 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_6XNN(self, opcode: Word) -> None:
+    def opcode_6XNN(self, opcode: int) -> None:
         """Sets VX to NN"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry = opcode.get_second_nibble()
-        value = opcode.get_low_byte()
+        registry = get_second_nibble(opcode)
+        value = get_low_byte(opcode)
 
         self.registry[registry] = value
         self.program_counter += 2
 
-    def opcode_7XNN(self, opcode: Word) -> None:
+    def opcode_7XNN(self, opcode: int) -> None:
         """Adds NN to VX (carry flag is not changed)"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
+        registry = get_second_nibble(opcode)
+        value = get_low_byte(opcode)
 
-        registry = opcode.get_second_nibble()
-        value = opcode.get_low_byte()
-
-        self.registry[registry] += value
+        new_value = (self.registry[registry] + value) & 0xFF
+        self.registry[registry] = new_value
         self.program_counter += 2
 
-    def opcode_8XY0(self, opcode: Word) -> None:
+    def opcode_8XY0(self, opcode: int) -> None:
         """Sets VX to the value of VY"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] = self.registry[registry_y]
         self.program_counter += 2
 
-    def opcode_8XY1(self, opcode: Word) -> None:
+    def opcode_8XY1(self, opcode: int) -> None:
         """Sets VX to VX OR VY"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] |= self.registry[registry_y]
         self.program_counter += 2
 
-    def opcode_8XY2(self, opcode: Word) -> None:
+    def opcode_8XY2(self, opcode: int) -> None:
         """Sets VX to VX AND VY"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] &= self.registry[registry_y]
         self.program_counter += 2
 
-    def opcode_8XY3(self, opcode: Word) -> None:
+    def opcode_8XY3(self, opcode: int) -> None:
         """Sets VX to VX XOR VY"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] ^= self.registry[registry_y]
         self.program_counter += 2
 
-    def opcode_8XY4(self, opcode: Word) -> None:
+    def opcode_8XY4(self, opcode: int) -> None:
         """Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't"""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] += self.registry[registry_y]
 
@@ -325,14 +230,11 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_8XY5(self, opcode: Word) -> None:
+    def opcode_8XY5(self, opcode: int) -> None:
         """VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1
         when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not)."""
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         if self.registry[registry_x] >= self.registry[registry_y]:
             self.carry_flag = 0b1
@@ -345,14 +247,10 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_8XY6(self, opcode: Word) -> None:
+    def opcode_8XY6(self, opcode: int) -> None:
         """Stores the least significant bit of VX in VF and
         then shifts VX to the right by 1"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         # Store the least significant bit of VX in VF
         self.carry_flag = self.registry[registry_x] & 0b1
@@ -362,15 +260,11 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_8XY7(self, opcode: Word) -> None:
+    def opcode_8XY7(self, opcode: int) -> None:
         """Sets VX to VY minus VX. VF is set to 0 when there's an underflow,
         and 1 when there is not. (i.e. VF set to 1 if VY >= VX)"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         if self.registry[registry_y] >= self.registry[registry_x]:
             self.carry_flag = 0b1
@@ -383,41 +277,32 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_8XYE(self, opcode: Word) -> None:
+    def opcode_8XYE(self, opcode: int) -> None:
         """Stores the most significant bit of VX in VF and then
         shifts VX to the left by 1"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         # Store the most significant bit of VX in VF
-        self.carry_flag = (
-            Byte(1) if (self.registry[registry_x] & 0b10000000) > 0 else Byte(0)
-        )
+        self.carry_flag = 0x1 if (self.registry[registry_x] & 0b10000000) > 0 else 0x0
 
         # Shift VX to the left by 1
-        self.registry[registry_x] = Byte(self.registry[registry_x] << 1)
+        new_value = self.registry[registry_x] << 1
+        self.registry[registry_x] = new_value & 0xFF
 
         self.program_counter += 2
 
-    def opcode_9XY0(self, opcode: Word) -> None:
+    def opcode_9XY0(self, opcode: int) -> None:
         """Skips the next instruction if VX does not equal VY. (Usually the next
         instruction is a jump to skip a code block)"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
         if self.registry[registry_x] != self.registry[registry_y]:
             self.program_counter += 4
         else:
             self.program_counter += 2
 
-    def opcode_ANNN(self, opcode: Word) -> None:
+    def opcode_ANNN(self, opcode: int) -> None:
         """
         Sets the value of the index registry to the address specified in the opcode.
 
@@ -428,27 +313,23 @@ class Processor:
         self.index_registry = address
         self.program_counter += 2
 
-    def opcode_BNNN(self, opcode: Word) -> None:
+    def opcode_BNNN(self, opcode: int) -> None:
         """Jumps to the address NNN plus V0"""
 
         address = opcode & 0x0FFF
-        self.program_counter = address + self.registry[0]
+        self.program_counter = (address + self.registry[0]) & 0xFFFF
 
-    def opcode_CXNN(self, opcode: Word) -> None:
-        """Sets VX to the result of a bitwise and operation on a random number
+    def opcode_CXNN(self, opcode: int) -> None:
+        """Sets VX to the result of a bitwise 'and' operation on a random number
         (Typically: 0 to 255) and NN"""
+        registry = get_second_nibble(opcode)
+        value = get_low_byte(opcode)
 
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry = opcode.get_second_nibble()
-        value = opcode.get_low_byte()
-
-        random_value = Byte(random.randint(0, 255))
+        random_value = random.randint(0, 255)
 
         self.registry[registry] = random_value & value
 
-    def opcode_DXYN(self, opcode: Word) -> None:
+    def opcode_DXYN(self, opcode: int) -> None:
         """
         Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height
         of N pixels. Each row of 8 pixels is read as bit-coded starting from memory
@@ -456,21 +337,17 @@ class Processor:
         As described above, VF is set to 1 if any screen pixels are flipped from set
         to unset when the sprite is drawn, and to 0 if that doesn't happen.
         """
+        registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
+        height = get_fourth_nibble(opcode)
 
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-        registry_y = opcode.get_third_nibble()
-        height = opcode.get_fourth_nibble()
-
-        x = self.registry[registry_x].value
-        y = self.registry[registry_y].value
+        x = self.registry[registry_x]
+        y = self.registry[registry_y]
 
         self.carry_flag = 0
 
-        for y_line in range(0, height.value):
-            pixel = self.memory[self.index_registry + y_line].value
+        for y_line in range(0, height):
+            pixel = self.memory[self.index_registry + y_line]
 
             for x_line in range(0, 8):
                 # Check if the bit of the pixel to be drawn is set to 1
@@ -482,49 +359,33 @@ class Processor:
         self.program_counter += 2
         self.draw_flag = True
 
-    def opcode_EX9E(self, opcode: Word) -> None:
+    def opcode_EX9E(self, opcode: int) -> None:
         """Skips the next instruction if the key stored in VX is pressed (usually the
         next instruction is a jump to skip a code block)."""
+        registry_x = get_second_nibble(opcode)
 
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-
-        if self.registry[registry_x] == self.keypad.get_pressed_key_as_nibble():
+        if self.registry[registry_x] == self.keypad.get_pressed_key():
             self.program_counter += 2
 
-    def opcode_EXA1(self, opcode: Word) -> None:
+    def opcode_EXA1(self, opcode: int) -> None:
         """Skips the next instruction if the key stored in VX is not pressed (usually
         the next instruction is a jump to skip a code block)."""
+        registry_x = get_second_nibble(opcode)
 
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
-
-        if self.registry[registry_x] != self.keypad.get_pressed_key_as_nibble():
+        if self.registry[registry_x] != self.keypad.get_pressed_key():
             self.program_counter += 2
 
-    def opcode_FX07(self, opcode: Word) -> None:
+    def opcode_FX07(self, opcode: int) -> None:
         """Sets VX to the value of the delay timer."""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         self.registry[registry_x] = self.delay_timer
         self.program_counter += 2
 
-    def opcode_FX0A(self, opcode: Word) -> None:
+    def opcode_FX0A(self, opcode: int) -> None:
         """A key press is awaited, and then stored in VX (blocking operation, all
         instruction halted until next key event)."""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         key = self.keypad.get_pressed_key_as_nibble()
 
@@ -534,63 +395,43 @@ class Processor:
         self.registry[registry_x] = key
         self.program_counter += 2
 
-    def opcode_FX15(self, opcode: Word) -> None:
+    def opcode_FX15(self, opcode: int) -> None:
         """Sets the delay timer to VX"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         self.delay_timer = self.registry[registry_x]
         self.program_counter += 2
 
-    def opcode_FX18(self, opcode: Word) -> None:
+    def opcode_FX18(self, opcode: int) -> None:
         """Sets the sound timer to VX"""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         self.sound_timer = self.registry[registry_x]
         self.program_counter += 2
 
-    def opcode_FX1E(self, opcode: Word) -> None:
+    def opcode_FX1E(self, opcode: int) -> None:
         """Adds VX to I. VF is not affected."""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         self.index_registry += self.registry[registry_x]
         self.program_counter += 2
 
-    def opcode_FX29(self, opcode: Word) -> None:
+    def opcode_FX29(self, opcode: int) -> None:
         """The index register I is set to the address of the hexadecimal character in
         VX."""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         self.index_registry = self.registry[registry_x]
         self.program_counter += 2
 
-    def opcode_FX33(self, opcode: Word) -> None:
+    def opcode_FX33(self, opcode: int) -> None:
         """It takes the number in VX (which is one byte, so it can be any number
         from 0 to 255) and converts it to three decimal digits, storing these digits in
         memory at the address in the index register I.
 
         For example, if VX contains 156 (or 9C in hexadecimal), it would put the
         number 1 at the address in I, 5 in address I + 1, and 6 in address I + 2."""
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble()
+        registry_x = get_second_nibble(opcode)
 
         value = self.registry[registry_x]
 
@@ -600,35 +441,27 @@ class Processor:
 
         self.program_counter += 2
 
-    def opcode_FX55(self, opcode: Word) -> None:
+    def opcode_FX55(self, opcode: int) -> None:
         """The value of each variable register from V0 to VX inclusive (if X is 0, then
         only V0) will be stored in successive memory addresses, starting with the one
         that's stored in I. V0 will be stored at the address in I, V1 will be stored
         in I + 1, and so on, until VX is stored in I + X.
         """
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble().to_int()
+        registry_x = get_second_nibble(opcode)
 
         for i in range(registry_x + 1):
             self.memory[self.index_registry + i] = self.registry[i]
 
         self.program_counter += 2
 
-    def opcode_FX65(self, opcode: Word) -> None:
+    def opcode_FX65(self, opcode: int) -> None:
         """The values of each variable register from V0 to VX inclusive (if X is 0, then
         only V0) will be filled with values from memory addresses starting with the one
         that's stored in I. V0 will be filled with the value in the address in I, V1 will
         be filled with the value in I + 1, and so on, until VX is filled with the value
         in I + X.
         """
-
-        if not isinstance(opcode, Word):
-            opcode = Word(opcode)
-
-        registry_x = opcode.get_second_nibble().to_int()
+        registry_x = get_second_nibble(opcode)
 
         for i in range(registry_x + 1):
             self.registry[i] = self.memory[self.index_registry + i]

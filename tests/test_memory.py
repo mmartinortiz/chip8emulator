@@ -1,7 +1,6 @@
 import pytest
 
 from chip8emulator.memory import Memory
-from chip8emulator.types import Byte
 
 
 def test_validate_address():
@@ -17,9 +16,9 @@ def test_validate_address():
 @pytest.mark.parametrize(
     "address, value, expected",
     [
-        (80, b"\x77", Byte(int.from_bytes(b"\x77", byteorder="big"))),
-        (80, 0x77, Byte(0x77)),
-        (160, 0x0A, Byte(0x0A)),
+        (80, b"\x77", int.from_bytes(b"\x77", byteorder="big")),
+        (80, 0x77, 0x77),
+        (160, 0x0A, 0x0A),
     ],
 )
 def test_get_set_item(address, value, expected):
@@ -27,10 +26,3 @@ def test_get_set_item(address, value, expected):
 
     memory[address] = value
     assert memory[address] == expected
-
-
-@pytest.mark.parametrize("value", [0x100, b"\x00\x01"])
-def test_set_exception(value):
-    memory = Memory()
-    with pytest.raises(ValueError):
-        memory[0] = value

@@ -40,3 +40,27 @@ class OPCODE(StrEnum):
 
     def __repr__(self) -> str:
         return f"0x{self.name[1:].upper()}"
+
+
+def get_high_byte(value) -> int:
+    return (value & 0xFF00) >> 8
+
+
+def get_low_byte(value) -> int:
+    return value & 0x00FF
+
+
+def get_first_nibble(value) -> int:
+    return (value & 0xF000) >> 12
+
+
+def get_second_nibble(value) -> int:
+    return (value & 0x0F00) >> 8
+
+
+def get_third_nibble(value) -> int:
+    return (value & 0x00F0) >> 4
+
+
+def get_fourth_nibble(value) -> int:
+    return value & 0x000F
