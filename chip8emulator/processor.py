@@ -43,6 +43,17 @@ class Processor:
         self.stack = [0x0] * 16
         self.stack_pointer = 0x0
 
+        self.load_font(font_file=Path(__file__).parent / Path("fonts.ch8"))
+
+    def load_font(self, font_file: Path) -> None:
+        if not font_file.exists():
+            raise FileNotFoundError(f"Font file {font_file} not found")
+        with font_file.open("rb") as f:
+            pointer = 0x050
+            while chunk := f.read(1):
+                self.memory[pointer] = chunk
+                pointer += 1
+
     def load_program(self, program: Path) -> None:
         if not program.exists():
             raise FileNotFoundError(f"Program file {program} not found")
@@ -71,7 +82,9 @@ class Processor:
     def opcode_00EE(self) -> None:
         """Return from a subroutine. Restore the program counter to the address
         pointed by the tip of the stack pointer and decrease the stack pointer."""
-        self.program_counter = self.stack[self.stack_pointer]
+        # The stack pointer points to the next free position of the stack, so we need
+        # to decrease it by 1 to get the address of the last subroutine call.
+        self.program_counter = self.stack[self.stack_pointer - 1]
 
         # Decrease the stack pointer
         self.stack_pointer -= 1
@@ -100,8 +113,8 @@ class Processor:
         retrieves the saved address from the stack and continues execution from that
         point, allowing the program to "return" from the subroutine.
         """
-        # Store the program_counter in the stack
-        self.stack[self.stack_pointer] = self.program_counter
+        # Store the instruction next to the current one into the stack
+        self.stack[self.stack_pointer] = self.program_counter + 2
 
         # Increase the stack pointer
         self.stack_pointer += 1
@@ -241,9 +254,9 @@ class Processor:
         else:
             self.carry_flag = 0b0
 
-        self.registry[registry_x] = abs(
-            self.registry[registry_x] - self.registry[registry_y]
-        )
+        new_value = (self.registry[registry_x] - self.registry[registry_y]) & 0xFF
+
+        self.registry[registry_x] = new_value
 
         self.program_counter += 2
 

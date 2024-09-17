@@ -65,13 +65,13 @@ def test_opcode_annnn(opcode, expected_registers, processor):
 
 
 def test_opcode_00EE(processor):
-    processor.stack_pointer = 2
+    processor.stack_pointer = 3
     processor.stack = [0x0000, 0x0001, 0x0002] + [0] * 13
     processor.program_counter = 0x111
     processor.opcode_00EE()
 
     # The stack pointer has been decreased
-    assert processor.stack_pointer == 1
+    assert processor.stack_pointer == 2
 
     # The PC points to the previous tip of the stack
     assert processor.program_counter == 0x0002
@@ -99,7 +99,7 @@ def test_opcode_2NNN(processor):
     assert processor.stack_pointer == 2
 
     # The stack contains the previous program counter
-    assert processor.stack == [0, 0x111] + [0] * 14
+    assert processor.stack == [0, 0x113] + [0] * 14
 
     # The program counter contains the new address
     assert processor.program_counter == 0x0333
@@ -263,8 +263,8 @@ def test_opcode_8XY4(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
         (0x3, 0x4, 0x33, 0x22, 0x11, 0b1),
-        (0x3, 0x4, 0x11, 0x22, 0x11, 0b0),
-        (0x3, 0x4, 0xAA, 0xEE, 0x44, 0b0),
+        (0x3, 0x4, 0x11, 0x22, 0xEF, 0b0),
+        (0x3, 0x4, 0xAA, 0xEE, 0xBC, 0b0),
         (0x3, 0x4, 0x01, 0x01, 0x00, 0b1),
     ],
 )
