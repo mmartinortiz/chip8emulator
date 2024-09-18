@@ -477,12 +477,11 @@ def test_opcode_DXYN(
     assert processor.program_counter == 0x112
 
 
-@pytest.mark.skip(reason="Keypad not implemented")
 @pytest.mark.parametrize(
     "registry_x, program_counter, x_value, key_pressed, expected",
     [
-        (1, 0x110, 0x1, "1", 0x112),
-        (1, 0x110, 0x1, "6", 0x110),
+        (1, 0x110, 0x1, 0x1, 0x114),
+        (1, 0x110, 0x1, 0x6, 0x112),
     ],
 )
 def test_opcode_EX9E(
@@ -496,12 +495,11 @@ def test_opcode_EX9E(
     assert processor.program_counter == expected
 
 
-@pytest.mark.skip(reason="Keypad not implemented")
 @pytest.mark.parametrize(
     "registry_x, program_counter, x_value, key_pressed, expected",
     [
-        (1, 0x110, 0x1, "1", 0x110),
-        (1, 0x110, 0x1, "6", 0x112),
+        (1, 0x110, 0x1, 0x1, 0x112),
+        (1, 0x110, 0x1, 0x6, 0x114),
     ],
 )
 def test_opcode_EXA1(
@@ -595,8 +593,8 @@ def test_opcode_FX1E(
 @pytest.mark.parametrize(
     "registry_x, value, expected_index_registry, expected_program_counter",
     [
-        (3, 0x0, 0x0, 0x112),
-        (5, 0x1, 0x1, 0x112),
+        (3, 0x0, 0x050, 0x112),
+        (5, 0x1, 0x055, 0x112),
     ],
 )
 def test_opcode_FX29(

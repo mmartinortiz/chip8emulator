@@ -39,6 +39,25 @@ class Chip8Emulator(arcade.Window):
         )
         self.processor.reset()
 
+        self.keymap = {
+            arcade.key.NUM_1: 0x1,
+            arcade.key.NUM_2: 0x2,
+            arcade.key.NUM_3: 0x3,
+            arcade.key.NUM_4: 0xC,
+            arcade.key.Q: 0x4,
+            arcade.key.W: 0x5,
+            arcade.key.E: 0x6,
+            arcade.key.R: 0xD,
+            arcade.key.A: 0x7,
+            arcade.key.S: 0x8,
+            arcade.key.D: 0x9,
+            arcade.key.F: 0xE,
+            arcade.key.Z: 0xA,
+            arcade.key.X: 0x0,
+            arcade.key.C: 0xB,
+            arcade.key.V: 0xF,
+        }
+
         # Chip8 has only one color
         self.sprites = SpriteList()
         for x in range(self.graphics.width):
@@ -79,7 +98,11 @@ class Chip8Emulator(arcade.Window):
 
     def on_key_release(self, key, modifiers):
         # Release the key
-        pass
+        if key in self.keymap:
+            self.keypad.press_key(self.keymap[key])
+
+        if key == arcade.key.ESCAPE:
+            arcade.exit()
 
     def update(self, delta_time):
         # Emulate one cycle

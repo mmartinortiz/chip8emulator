@@ -43,16 +43,46 @@ class Processor:
         self.stack = [0x0] * 16
         self.stack_pointer = 0x0
 
+        self.font_memory_map = {
+            0x0: None,
+            0x1: None,
+            0x2: None,
+            0x3: None,
+            0x4: None,
+            0x5: None,
+            0x6: None,
+            0x7: None,
+            0x8: None,
+            0x9: None,
+            0xA: None,
+            0xB: None,
+            0xC: None,
+            0xD: None,
+            0xE: None,
+            0xF: None,
+        }
         self.load_font(font_file=Path(__file__).parent / Path("fonts.ch8"))
+
+        # Flag that indicates if the CPU is blocked in a blocking operation
+        # Used in the FX0A opcode to wait for a key to be pressed. When the
+        # execution is blocked, the CPU will not advance to the next instruction.
+        self.withhold_execution = False
 
     def load_font(self, font_file: Path) -> None:
         if not font_file.exists():
             raise FileNotFoundError(f"Font file {font_file} not found")
         with font_file.open("rb") as f:
             pointer = 0x050
-            while chunk := f.read(1):
-                self.memory[pointer] = chunk
-                pointer += 1
+            for key in self.font_memory_map.keys():
+                self.font_memory_map[key] = pointer
+                bytes_read = 0
+                while bytes_read < 5:
+                    chunk = f.read(1)
+                    if not chunk:
+                        break
+                    self.memory[pointer] = int.from_bytes(chunk)
+                    pointer += 1
+                    bytes_read += 1
 
     def load_program(self, program: Path) -> None:
         if not program.exists():
@@ -137,9 +167,8 @@ class Processor:
 
         if self.registry[registry] == value:
             self.program_counter += 4
-            return
-
-        self.program_counter += 2
+        else:
+            self.program_counter += 2
 
     def opcode_4XNN(self, opcode: int) -> None:
         """
@@ -155,9 +184,8 @@ class Processor:
 
         if self.registry[registry] != value:
             self.program_counter += 4
-            return
-
-        self.program_counter += 2
+        else:
+            self.program_counter += 2
 
     def opcode_5XY0(self, opcode: int) -> None:
         """
@@ -175,9 +203,8 @@ class Processor:
 
         if self.registry[registry_x] == self.registry[registry_y]:
             self.program_counter += 4
-            return
-
-        self.program_counter += 2
+        else:
+            self.program_counter += 2
 
     def opcode_6XNN(self, opcode: int) -> None:
         """Sets VX to NN"""
@@ -378,6 +405,8 @@ class Processor:
         registry_x = get_second_nibble(opcode)
 
         if self.registry[registry_x] == self.keypad.get_pressed_key():
+            self.program_counter += 4
+        else:
             self.program_counter += 2
 
     def opcode_EXA1(self, opcode: int) -> None:
@@ -386,6 +415,8 @@ class Processor:
         registry_x = get_second_nibble(opcode)
 
         if self.registry[registry_x] != self.keypad.get_pressed_key():
+            self.program_counter += 4
+        else:
             self.program_counter += 2
 
     def opcode_FX07(self, opcode: int) -> None:
@@ -400,13 +431,15 @@ class Processor:
         instruction halted until next key event)."""
         registry_x = get_second_nibble(opcode)
 
-        key = self.keypad.get_pressed_key_as_nibble()
+        if self.keypad.is_key_available():
+            key = self.keypad.get_pressed_key()
+            self.withhold_execution = False
+        else:
+            self.withhold_execution = True
 
-        if key is None:
-            return
-
-        self.registry[registry_x] = key
-        self.program_counter += 2
+        if not self.withhold_execution:
+            self.registry[registry_x] = key
+            self.program_counter += 2
 
     def opcode_FX15(self, opcode: int) -> None:
         """Sets the delay timer to VX"""
@@ -434,7 +467,9 @@ class Processor:
         VX."""
         registry_x = get_second_nibble(opcode)
 
-        self.index_registry = self.registry[registry_x]
+        character = self.registry[registry_x]
+        self.index_registry = self.font_memory_map[character]
+
         self.program_counter += 2
 
     def opcode_FX33(self, opcode: int) -> None:
