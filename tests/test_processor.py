@@ -309,8 +309,9 @@ def test_opcode_8XY6(
 @pytest.mark.parametrize(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
-        (3, 4, 0x33, 0x22, 0x11, 0b0),
+        (3, 4, 0x33, 0x22, 0xEF, 0b0),
         (3, 4, 0x11, 0x22, 0x11, 0b1),
+        (3, 4, 0x8C, 0x78, 0xEC, 0b0),
     ],
 )
 def test_opcode_8XY7(

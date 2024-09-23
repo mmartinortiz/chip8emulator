@@ -24,7 +24,7 @@ class Processor:
 
     def reset(self) -> None:
         # Registers
-        self.registry = {k: v for k, v in enumerate([0] * 15)}
+        self.registry = {k: v for k, v in enumerate([0] * 16)}
 
         # Also known as vF
         self.carry_flag = 0x0
@@ -306,15 +306,14 @@ class Processor:
         registry_x = get_second_nibble(opcode)
         registry_y = get_third_nibble(opcode)
 
-        if self.registry[registry_y] >= self.registry[registry_x]:
+        if self.registry[registry_y] > self.registry[registry_x]:
             self.carry_flag = 0b1
         else:
             self.carry_flag = 0b0
 
-        self.registry[registry_x] = abs(
-            self.registry[registry_y] - self.registry[registry_x]
-        )
+        new_value = (self.registry[registry_y] - self.registry[registry_x]) & 0xFF
 
+        self.registry[registry_x] = new_value
         self.program_counter += 2
 
     def opcode_8XYE(self, opcode: int) -> None:
