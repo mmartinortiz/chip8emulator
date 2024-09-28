@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CHIP-8",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "module": "chip8emulator.chip8emulator",
+      "justMyCode": false,
+      "args": ["roms/4-flags.ch8"]
+    }
+  ]
+}
