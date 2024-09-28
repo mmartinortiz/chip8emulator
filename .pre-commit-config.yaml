@@ -25,3 +25,6 @@ repos:
         args: [--fix]
       # Run the formatter.
       - id: ruff-format
+
+exclude: |
+  (?x)^tests/roms/
