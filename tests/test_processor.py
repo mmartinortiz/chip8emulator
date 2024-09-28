@@ -252,7 +252,7 @@ def test_opcode_8XY4(
     processor.registry[registry_x] = value_x
     processor.registry[registry_y] = value_y
     processor.program_counter = 0x110
-    processor.opcode_8XY4(0x8344)
+    processor.opcode_8XY4(int(f"0x8{registry_x:X}{registry_y:X}5", 16))
 
     assert processor.registry[registry_x] == expected
     assert processor.carry_flag == overflow
@@ -262,10 +262,15 @@ def test_opcode_8XY4(
 @pytest.mark.parametrize(
     "registry_x, registry_y, value_x, value_y, expected, overflow",
     [
-        (0x3, 0x4, 0x33, 0x22, 0x11, 0b1),
+        (0x1, 0x2, 0x33, 0x22, 0x11, 0b1),
         (0x3, 0x4, 0x11, 0x22, 0xEF, 0b0),
-        (0x3, 0x4, 0xAA, 0xEE, 0xBC, 0b0),
-        (0x3, 0x4, 0x01, 0x01, 0x00, 0b1),
+        (0x5, 0x6, 0xAA, 0xEE, 0xBC, 0b0),
+        (0x7, 0x8, 0x01, 0x01, 0x00, 0b1),
+        (0x9, 0xA, 0x4B, 0x2D, 0x1E, 0b1),
+        (0xB, 0xC, 0x2D, 0x4B, 0xE2, 0b0),
+        # Next operation will be vF = vF - vC. As vF is also the carry_flag, it must
+        # be overwritten by the carry flag, so, the expected value is 0.
+        (0xF, 0xC, 0x14, 0x23, 0x0, 0b0),
     ],
 )
 def test_opcode_8XY5(
@@ -274,7 +279,7 @@ def test_opcode_8XY5(
     processor.registry[registry_x] = value_x
     processor.registry[registry_y] = value_y
     processor.program_counter = 0x110
-    processor.opcode_8XY5(int(f"0x8{registry_x}{registry_y}5", 16))
+    processor.opcode_8XY5(int(f"0x8{registry_x:X}{registry_y:X}5", 16))
 
     assert processor.registry[registry_x] == expected
     assert processor.carry_flag == overflow
@@ -282,28 +287,32 @@ def test_opcode_8XY5(
 
 
 @pytest.mark.parametrize(
-    "registry_x, value_x, program_counter, expected_registry, expected_carry, expected_program_counter",
+    "registry_x, registry_y, value_y, expected_value, expected_carry",
     [
-        (0x3, 0b1110, 0x110, 0b0111, 0, 0x112),
-        (0x3, 0b1101, 0x110, 0b0110, 1, 0x112),
+        (0x3, 0x4, 0b11111111, 0b01111111, 0b1),
+        (0x5, 0x6, 0b11111110, 0b01111111, 0b0),
+        (0x7, 0x8, 0b00101100, 0b00010110, 0b0),
+        (0x9, 0xA, 0b00101101, 0b00010110, 0b1),
+        # Next operation will be vF = vF - vC. As vF is also the carry_flag, it must
+        # be overwritten by the carry flag, so, the expected value is 1.
+        (0xF, 0xC, 0b10101101, 0b1, 0b1),
     ],
 )
 def test_opcode_8XY6(
     processor,
     registry_x,
-    value_x,
-    program_counter,
-    expected_registry,
+    registry_y,
+    value_y,
+    expected_value,
     expected_carry,
-    expected_program_counter,
 ):
-    processor.registry[registry_x] = value_x
-    processor.program_counter = program_counter
-    processor.opcode_8XY6(int(f"0x8{registry_x}06", 16))
+    processor.registry[registry_y] = value_y
+    processor.program_counter = 0x110
+    processor.opcode_8XY6(int(f"0x8{registry_x:X}{registry_y:X}6", 16))
 
-    assert processor.registry[registry_x] == expected_registry
+    assert processor.registry[registry_x] == expected_value
     assert processor.carry_flag == expected_carry
-    assert processor.program_counter == expected_program_counter
+    assert processor.program_counter == 0x112
 
 
 @pytest.mark.parametrize(
@@ -328,22 +337,28 @@ def test_opcode_8XY7(
 
 
 @pytest.mark.parametrize(
-    "registry_x, value_x, expected_value, expected_carry",
+    "registry_x, registry_y, value_y, expected_value, expected_carry",
     [
-        (3, 0b01111111, 0b11111110, 0b0),
-        (3, 0b10000000, 0b00000000, 0b1),
+        (0x3, 0x4, 0b01111111, 0b11111110, 0b0),
+        (0x5, 0x6, 0b10000000, 0b00000000, 0b1),
+        (0xA, 0xB, 0b00101101, 0b01011010, 0b0),
+        (0xB, 0xC, 0b10101101, 0b01011010, 0b1),
+        # Next operation will be vF = vF - vC. As vF is also the carry_flag, it must
+        # be overwritten by the carry flag, so, the expected value is 1.
+        (0xF, 0xC, 0b10101101, 0b1, 0b1),
     ],
 )
 def test_opcode_8XYE(
     processor,
     registry_x,
-    value_x,
+    registry_y,
+    value_y,
     expected_value,
     expected_carry,
 ):
-    processor.registry[registry_x] = value_x
+    processor.registry[registry_y] = value_y
     processor.program_counter = 0x110
-    processor.opcode_8XYE(int(f"0x8{registry_x}0E", 16))
+    processor.opcode_8XYE(int(f"0x8{registry_x:X}{registry_y:X}E", 16))
 
     assert processor.registry[registry_x] == expected_value
     assert processor.carry_flag == expected_carry
@@ -695,3 +710,36 @@ def test_opcode_FX65(
     for i in range(registry_x + 1):
         assert processor.registry[i] == expected_registry_values[i]
     assert processor.program_counter == 0x202
+
+
+@pytest.mark.parametrize(
+    "test_suite, test_suite_output, last_pc",
+    [
+        (
+            Path(__file__).parent / Path("roms/1-chip8-logo.ch8"),
+            Path(__file__).parent / Path("roms/1-chip8-logo.txt"),
+            0x24E,
+        ),
+        (
+            Path(__file__).parent / Path("roms/3-corax+.ch8"),
+            Path(__file__).parent / Path("roms/3-corax+.txt"),
+            0x49C,
+        ),
+        (
+            Path(__file__).parent / Path("roms/4-flags.ch8"),
+            Path(__file__).parent / Path("roms/4-flags.txt"),
+            0x542,
+        ),
+    ],
+)
+def test_with_test_suite(test_suite, test_suite_output, last_pc, processor):
+    """Use the test suite from https://github.com/Timendus/chip8-test-suite and check
+    that the emulator 'draws' the expected pixels on the screen."""
+    processor.load_program(test_suite)
+    expected = open(test_suite_output, "r").read()
+
+    # TODO: There must be a more elegant way to find out when the program has finished
+    while processor.program_counter != last_pc:
+        processor.cycle()
+
+    assert str(processor.graphics) == expected
