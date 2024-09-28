@@ -22,8 +22,20 @@ class Processor:
 
         self.reset()
 
+    @property
+    def carry_flag(self) -> int:
+        """VF is also used as a flag register; many instructions will set it to
+        either 1 or 0 based on some rule, for example using it as a carry flag"""
+        return self.registry[0xF]
+
+    @carry_flag.setter
+    def carry_flag(self, value: int) -> None:
+        self.registry[0xF] = value
+
     def reset(self) -> None:
-        # Registers
+        # Registers.
+        # VF is also used as a flag register; many instructions will set it to
+        # either 1 or 0 based on some rule, for example using it as a carry flag
         self.registry = {k: v for k, v in enumerate([0] * 16)}
 
         # Also known as vF
@@ -85,6 +97,7 @@ class Processor:
                     bytes_read += 1
 
     def load_program(self, program: Path) -> None:
+        program = Path(program)
         if not program.exists():
             raise FileNotFoundError(f"Program file {program} not found")
         with program.open("rb") as f:
@@ -256,77 +269,117 @@ class Processor:
         self.program_counter += 2
 
     def opcode_8XY4(self, opcode: int) -> None:
-        """Adds VY to VX. VF is set to 1 when there's a carry, and to 0 when there isn't"""
+        """Vx is set to the value of Vx + Vy. Vy is not affected.
+
+        Unlike 7XNN, this addition will affect the carry flag. If the result is larger
+        than 255 (and thus overflows the 8-bit register VX), the flag register VF is set
+        to 1. If it doesn't overflow, VF is set to 0."""
         registry_x = get_second_nibble(opcode)
         registry_y = get_third_nibble(opcode)
 
-        self.registry[registry_x] += self.registry[registry_y]
+        value = self.registry[registry_x] + self.registry[registry_y]
 
-        if self.registry[registry_x] > 255:
-            self.registry[registry_x] &= 0x0FF
+        if value > 255:
+            self.registry[registry_x] = value & 0xFF
             self.carry_flag = 0b1
         else:
+            self.registry[registry_x] = value
             self.carry_flag = 0b0
 
         self.program_counter += 2
 
     def opcode_8XY5(self, opcode: int) -> None:
-        """VY is subtracted from VX. VF is set to 0 when there's an underflow, and 1
-        when there is not. (i.e. VF set to 1 if VX >= VY and 0 if not)."""
+        """Sets VX = VX - VY.
+
+        This subtraction will also affect the carry flag. If the minuend (the first
+        operand) is larger than the subtrahend (second operand), VF will be set to 1.
+
+        If the subtrahend is larger, and we “underflow” the result, VF is set to 0.
+        Another way of thinking of it is that VF is set to 1 before the subtraction,
+        and then the subtraction either borrows from VF (setting it to 0) or not.
+
+        """
         registry_x = get_second_nibble(opcode)
         registry_y = get_third_nibble(opcode)
 
+        value = (self.registry[registry_x] - self.registry[registry_y]) & 0xFF
+
         if self.registry[registry_x] >= self.registry[registry_y]:
+            # Heads up!: if vF is also the carry flag, and the carry flag will
+            # be the last to be set, even if it overwrites the operation result.
+            self.registry[registry_x] = value
             self.carry_flag = 0b1
         else:
+            self.registry[registry_x] = value
             self.carry_flag = 0b0
-
-        new_value = (self.registry[registry_x] - self.registry[registry_y]) & 0xFF
-
-        self.registry[registry_x] = new_value
 
         self.program_counter += 2
 
     def opcode_8XY6(self, opcode: int) -> None:
-        """Stores the least significant bit of VX in VF and
-        then shifts VX to the right by 1"""
+        """vX = vY >> 1
+
+        Put the value of VY into VX, and then shifted the value in VX 1 bit to the
+        right. VY was not affected, but the flag register VF would be set to the bit
+        that was shifted out.
+
+        1. Set VX to the value of VY
+        2. Shift the value of VX one bit to the right
+        3. Set VF to 1 if the bit that was shifted out was 1, or 0 if it was 0
+        """
         registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
-        # Store the least significant bit of VX in VF
-        self.carry_flag = self.registry[registry_x] & 0b1
+        self.registry[registry_x] = self.registry[registry_y]
 
-        # Shift VX to the right by 1
-        self.registry[registry_x] >>= 1
+        shifted = self.registry[registry_x] & 0b1
+
+        self.registry[registry_x] = (self.registry[registry_x] >> 1) & 0xFF
+        self.carry_flag = shifted
 
         self.program_counter += 2
 
     def opcode_8XY7(self, opcode: int) -> None:
-        """Sets VX to VY minus VX. VF is set to 0 when there's an underflow,
-        and 1 when there is not. (i.e. VF set to 1 if VY >= VX)"""
+        """Sets VX = VY - VX
+
+        This subtraction will also affect the carry flag. If the minuend (the first
+        operand) is larger than the subtrahend (second operand), VF will be set to 1.
+
+        If the subtrahend is larger, and we “underflow” the result, VF is set to 0.
+        Another way of thinking of it is that VF is set to 1 before the subtraction,
+        and then the subtraction either borrows from VF (setting it to 0) or not.
+        """
         registry_x = get_second_nibble(opcode)
         registry_y = get_third_nibble(opcode)
+
+        value = (self.registry[registry_y] - self.registry[registry_x]) & 0xFF
+        self.registry[registry_x] = value
 
         if self.registry[registry_y] > self.registry[registry_x]:
             self.carry_flag = 0b1
         else:
             self.carry_flag = 0b0
 
-        new_value = (self.registry[registry_y] - self.registry[registry_x]) & 0xFF
-
-        self.registry[registry_x] = new_value
         self.program_counter += 2
 
     def opcode_8XYE(self, opcode: int) -> None:
-        """Stores the most significant bit of VX in VF and then
-        shifts VX to the left by 1"""
+        """vX = vY << 1
+
+        Put the value of VY into VX, and then shifted the value in VX 1 bit to the left.
+        VY was not affected, but the flag register VF would be set to the bit that was
+        shifted out.
+
+        1. Set VX to the value of VY
+        2. Shift the value of VX one bit to the left
+        3. Set VF to 1 if the bit that was shifted out was 1, or 0 if it was 0"""
         registry_x = get_second_nibble(opcode)
+        registry_y = get_third_nibble(opcode)
 
-        # Store the most significant bit of VX in VF
-        self.carry_flag = 0x1 if (self.registry[registry_x] & 0b10000000) > 0 else 0x0
+        self.registry[registry_x] = self.registry[registry_y]
 
-        # Shift VX to the left by 1
-        new_value = self.registry[registry_x] << 1
-        self.registry[registry_x] = new_value & 0xFF
+        shifted = 0x1 if (self.registry[registry_x] & 0b10000000) > 0 else 0x0
+
+        self.registry[registry_x] = (self.registry[registry_x] << 1) & 0xFF
+        self.carry_flag = shifted
 
         self.program_counter += 2
 
