@@ -36,3 +36,8 @@ class Graphics:
             value (int): Value to set the pixel to.
         """
         self.pixels[y][x] = value
+
+    def __repr__(self) -> str:
+        return "\n".join(
+            "".join("X" if pixel == 1 else "." for pixel in row) for row in self.pixels
+        )
