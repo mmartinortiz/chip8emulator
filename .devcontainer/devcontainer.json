@@ -5,18 +5,14 @@
 	},
 	"containerEnv": {
 		"POETRY_VIRTUALENVS_CREATE": "true",
-		"POETRY_VIRTUALENVS_IN_PROJECT": "true",
-		"DISPLAY": "${localEnv:DISPLAY}"
+		"POETRY_VIRTUALENVS_IN_PROJECT": "true"
 	},
-	"runArgs": [
-        "--net", "host",
-        "-v", "/tmp/.X11-unix:/tmp/.X11-unix"
-],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers-extra/features/poetry": "latest"
 	},
-	"postCreateCommand": "/bin/bash ${containerWorkspaceFolder}/.devcontainer/postCreateCommand.sh",
+	"postCreateCommand": "poetry install --with dev",
+	// "postCreateCommand": "/bin/bash ${containerWorkspaceFolder}/.devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
 			"extensions": [
