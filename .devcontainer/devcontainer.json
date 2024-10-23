@@ -15,18 +15,12 @@
 		"--device=/dev/dri",
 		"--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
 		"--network=host"
-		// "--env=XDG_RUNTIME_DIR=${localEnv:XDG_RUNTIME_DIR}",
-		// "--env=DBUS_SESSION_BUS_ADDRESS=unix:path=${localEnv:XDG_RUNTIME_DIR}/bus",
 
 	],
 	"mounts": [
 		"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached",
-		// "source=${localEnv:XDG_RUNTIME_DIR},target=${localEnv:XDG_RUNTIME_DIR},type=bind,consistency=cached",
-		// "source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},type=bind",
-		// "source=${localEnv:XDG_RUNTIME_DIR}/bus,target=${localEnv:XDG_RUNTIME_DIR}/bus,type=bind"
 	],
 	"postCreateCommand": "poetry install --with dev",
-	// "postCreateCommand": "/bin/bash ${containerWorkspaceFolder}/.devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
 			"extensions": [
