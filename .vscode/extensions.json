@@ -1,7 +1,6 @@
 {
   "recommendations": [
     "tamasfe.even-better-toml",
-    "jetpack-io.devbox",
     "ms-python.python",
     "charliermarsh.ruff"
   ]
