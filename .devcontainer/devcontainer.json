@@ -1,0 +1,43 @@
+{
+	"name": "Python 3",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"containerEnv": {
+		"POETRY_VIRTUALENVS_CREATE": "true",
+		"POETRY_VIRTUALENVS_IN_PROJECT": "true"
+	},
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers-extra/features/poetry": "latest"
+	},
+	"runArgs": [
+		"--device=/dev/dri",
+		"--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
+		"--network=host"
+
+	],
+	"mounts": [
+		"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached",
+	],
+	"postCreateCommand": "poetry install --with dev",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"tamasfe.even-better-toml",
+				"charliermarsh.ruff"
+			],
+			"settings": {
+				"python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
+				"python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
+				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true,
+				"python.testing.pytestArgs": [
+					"tests",
+					"--no-cov"
+				]
+			}
+		}
+	}
+}
