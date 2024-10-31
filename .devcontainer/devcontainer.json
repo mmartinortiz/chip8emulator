@@ -13,13 +13,13 @@
 	},
 	"runArgs": [
 		"--device=/dev/dri",
-		"--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
+		// "--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
 		"--network=host"
-
 	],
-	"mounts": [
-		"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached",
-	],
+	"initializeCommand": "xhost +local:docker",
+	// "mounts": [
+	// 	"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached"
+	// ],
 	"postCreateCommand": "poetry install --with dev",
 	"customizations": {
 		"vscode": {
