@@ -90,7 +90,8 @@ class Chip8Emulator(arcade.Window):
             x = self.scale_x_axis(sprite.center_x)
             pixel = self.graphics.get(x, y)
             sprite.color = arcade.color.WHITE if pixel == 1 else arcade.color.BLACK
-            sprite.draw()
+
+        self.sprites.draw()
 
     def on_key_press(self, key, modifiers):
         # Press the key
