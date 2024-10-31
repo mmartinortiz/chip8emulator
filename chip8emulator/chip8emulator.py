@@ -40,10 +40,10 @@ class Chip8Emulator(arcade.Window):
         self.processor.reset()
 
         self.keymap = {
-            arcade.key.NUM_1: 0x1,
-            arcade.key.NUM_2: 0x2,
-            arcade.key.NUM_3: 0x3,
-            arcade.key.NUM_4: 0xC,
+            arcade.key.KEY_1: 0x1,
+            arcade.key.KEY_2: 0x2,
+            arcade.key.KEY_3: 0x3,
+            arcade.key.KEY_4: 0xC,
             arcade.key.Q: 0x4,
             arcade.key.W: 0x5,
             arcade.key.E: 0x6,
