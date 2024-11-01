@@ -20,7 +20,7 @@
 	// "mounts": [
 	// 	"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached"
 	// ],
-	"postCreateCommand": "poetry install --with dev",
+	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
 			"extensions": [
