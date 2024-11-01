@@ -545,6 +545,43 @@ def test_opcode_FX07(processor, program_counter, registry_x, delay, expected_pc)
     assert processor.program_counter == expected_pc
 
 
+def test_opcode_FX0A(processor):
+    processor.program_counter = 0x110
+    processor.sound_timer = 4
+    expected_pc = processor.program_counter + 2
+    expected_key = 0x3
+    registry_x = 0x5
+    first_byte = int(f"0xF{registry_x}", 16)
+    second_byte = 0x0A
+    processor.memory[processor.program_counter] = first_byte
+    processor.memory[processor.program_counter + 1] = second_byte
+
+    # A key is registered (press and release)
+    processor.keypad.press_key(0x1)
+    processor.keypad.release_key(0x1)
+
+    # The execution is paused
+    processor.opcode_FX0A(int(f"0x{first_byte}{second_byte}", 16))
+    assert processor.withhold_execution is True
+
+    # The timers are updated
+    processor.cycle()
+    assert processor.sound_timer == 3
+    processor.cycle()
+    assert processor.sound_timer == 2
+
+    # Press a key
+    processor.keypad.press_key(expected_key)
+    processor.keypad.release_key(expected_key)
+
+    # The execution is resumed
+    processor.cycle()
+    assert processor.registry[registry_x] == expected_key
+    assert processor.withhold_execution is False
+
+    assert processor.program_counter == expected_pc
+
+
 @pytest.mark.parametrize(
     "registry_x, value, expected_delay_timer, expected_program_counter",
     [
