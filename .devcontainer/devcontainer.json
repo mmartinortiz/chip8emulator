@@ -25,7 +25,8 @@
 		"vscode": {
 			"extensions": [
 				"tamasfe.even-better-toml",
-				"charliermarsh.ruff"
+				"charliermarsh.ruff",
+				"ms-vscode.hexeditor"
 			],
 			"settings": {
 				"python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
