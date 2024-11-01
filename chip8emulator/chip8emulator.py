@@ -94,13 +94,16 @@ class Chip8Emulator(arcade.Window):
         self.sprites.draw()
 
     def on_key_press(self, key, modifiers):
-        # Press the key
-        pass
-
-    def on_key_release(self, key, modifiers):
-        # Release the key
         if key in self.keymap:
             self.keypad.press_key(self.keymap[key])
+        else:
+            logger.debug(f"Key {key} not mapped")
+
+    def on_key_release(self, key, modifiers):
+        if key in self.keymap:
+            self.keypad.release_key(self.keymap[key])
+        else:
+            logger.debug(f"Key {key} not mapped")
 
         if key == arcade.key.ESCAPE:
             arcade.exit()
@@ -108,10 +111,6 @@ class Chip8Emulator(arcade.Window):
     def update(self, delta_time):
         # Emulate one cycle
         self.processor.cycle()
-
-        # If the draw flag is set, update the screen
-
-        # Store key press state (Press and Release)
 
 
 def main():
