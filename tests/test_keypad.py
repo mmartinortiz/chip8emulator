@@ -1,6 +1,6 @@
 import pytest
 
-from chip8emulator.keypad import Keypad, NoKeyAvailable
+from chip8emulator.keypad import Keypad
 
 
 @pytest.fixture
@@ -8,38 +8,41 @@ def keypad():
     return Keypad()
 
 
-def test_press_key_valid_key(keypad):
+def test_is_key_available(keypad):
+    assert keypad.is_key_available() is False
     keypad.press_key(0x1)
-    assert keypad.pressed_keys == [0x1]
-
-
-def test_press_key_invalid_key(keypad):
-    with pytest.raises(ValueError, match="Invalid key: 0x10"):
-        keypad.press_key(0x10)
-
-
-def test_press_key_non_integer(keypad):
-    with pytest.raises(ValueError, match="Invalid key: a"):
-        keypad.press_key("a")
-
-
-def test_get_pressed_key_with_keys(keypad):
-    keypad.press_key(0x1)
-    keypad.press_key(0x2)
-    assert keypad.get_pressed_key() == 0x1
-    assert keypad.get_pressed_key() == 0x2
-    assert len(keypad.pressed_keys) == 0
-    with pytest.raises(NoKeyAvailable):
-        keypad.get_pressed_key()
-
-
-def test_is_key_available_with_keys(keypad):
-    keypad.press_key(0x1)
+    keypad.release_key(0x1)
     assert keypad.is_key_available() is True
 
 
-def test_is_key_available_without_keys(keypad):
-    while len(keypad.pressed_keys) > 0:
-        _ = keypad.get_pressed_key()
+def is_key_pressed(keypad):
+    assert keypad.is_key_pressed(0x1) is False
+    keypad.press_key(0x1)
+    assert keypad.is_key_pressed(0x1) is True
+    keypad.release_key(0x1)
+    assert keypad.is_key_pressed(0x1) is False
 
-    assert keypad.is_key_available() is False
+
+def test_get_pressed_key(keypad):
+    assert keypad.get_pressed_key() == -1
+    keypad.press_key(0x1)
+    keypad.release_key(0x1)
+    assert keypad.get_pressed_key() == 0x1
+    assert keypad.get_pressed_key() == -1
+
+
+def test_press_key(keypad):
+    assert keypad.is_key_pressed(0x1) is False
+    keypad.press_key(0x1)
+    assert keypad.is_key_pressed(0x1) is True
+    keypad.release_key(0x1)
+    assert keypad.is_key_pressed(0x1) is False
+
+
+def test_release_key(keypad):
+    assert keypad.is_key_pressed(0x1) is False
+    keypad.press_key(0x1)
+    assert keypad.is_key_pressed(0x1) is True
+    keypad.release_key(0x1)
+    assert keypad.is_key_pressed(0x1) is False
+    assert keypad.accumulator == 0x1

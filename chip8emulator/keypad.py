@@ -1,43 +1,63 @@
-class NoKeyAvailable(Exception):
-    pass
+from loguru import logger
 
 
 class Keypad:
     def __init__(self) -> None:
-        self.keys = [
-            0x0,
-            0x1,
-            0x2,
-            0x3,
-            0x4,
-            0x5,
-            0x6,
-            0x7,
-            0x8,
-            0x9,
-            0xA,
-            0xB,
-            0xC,
-            0xD,
-            0xE,
-            0xF,
-        ]
-        self.pressed_keys = []
-
-    def press_key(self, key: int):
-        if isinstance(key, int) and key in self.keys:
-            self.pressed_keys.append(key)
-        else:
-            if isinstance(key, int):
-                raise ValueError(f"Invalid key: {hex(key)}")
-            else:
-                raise ValueError(f"Invalid key: {key}")
-
-    def get_pressed_key(self) -> int:
-        if self.is_key_available():
-            return self.pressed_keys.pop(0)
-        else:
-            raise NoKeyAvailable
+        # Keymap, indicating if a key is currently being pressed
+        self.keys = {
+            0x0: False,
+            0x1: False,
+            0x2: False,
+            0x3: False,
+            0x4: False,
+            0x5: False,
+            0x6: False,
+            0x7: False,
+            0x8: False,
+            0x9: False,
+            0xA: False,
+            0xB: False,
+            0xC: False,
+            0xD: False,
+            0xE: False,
+            0xF: False,
+        }
+        # Last pressed-released key
+        self.accumulator = -1
 
     def is_key_available(self) -> bool:
-        return len(self.pressed_keys) > 0
+        """Indicates if there is a key available to be read"""
+        return self.accumulator > 0
+
+    def is_key_pressed(self, key: int) -> bool:
+        """Indicates if a key is currently being pressed"""
+        return self.keys[key]
+
+    def get_pressed_key(self) -> int:
+        """Returns the last pressed key"""
+        if self.is_key_available():
+            key = self.accumulator
+            self.accumulator = -1
+            return key
+        else:
+            return -1
+
+    def press_key(self, key: int):
+        """Set a key as currently be pressed"""
+        if key in self.keys:
+            self.keys[key] = True
+        else:
+            logger.debug(f"Invalid key pressed: {key}")
+
+    def release_key(self, key: int):
+        """Set a key as currently be released. This will make the key be available to
+        be read"""
+        if key in self.keys:
+            self.keys[key] = False
+            # On the original COSMAC VIP, the key was only registered when it was
+            # pressed and then released.
+            # self.accumulator.append(key)
+            self.accumulator = key
+            logger.debug(self.accumulator)
+        else:
+            logger.debug(f"Invalid key released: {key}")
