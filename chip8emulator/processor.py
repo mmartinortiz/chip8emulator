@@ -106,6 +106,14 @@ class Processor:
                 self.memory[pointer] = chunk
                 pointer += 1
 
+    def skip_next_instruction(self) -> None:
+        if not self.withhold_execution:
+            self.program_counter += 4
+
+    def continue_to_next_instruction(self) -> None:
+        if not self.withhold_execution:
+            self.program_counter += 2
+
     def fetch_opcode(self) -> int:
         opcode = (
             self.memory[self.program_counter] << 8
@@ -120,7 +128,7 @@ class Processor:
         """Clear screen"""
         self.graphics.clear()
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_00EE(self) -> None:
         """Return from a subroutine. Restore the program counter to the address
@@ -179,9 +187,9 @@ class Processor:
         value = get_low_byte(opcode)
 
         if self.registry[registry] == value:
-            self.program_counter += 4
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_4XNN(self, opcode: int) -> None:
         """
@@ -196,9 +204,9 @@ class Processor:
         value = get_low_byte(opcode)
 
         if self.registry[registry] != value:
-            self.program_counter += 4
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_5XY0(self, opcode: int) -> None:
         """
@@ -215,9 +223,9 @@ class Processor:
             raise ValueError(f"Unexpected value {registry_x} or {registry_y}")
 
         if self.registry[registry_x] == self.registry[registry_y]:
-            self.program_counter += 4
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_6XNN(self, opcode: int) -> None:
         """Sets VX to NN"""
@@ -225,7 +233,7 @@ class Processor:
         value = get_low_byte(opcode)
 
         self.registry[registry] = value
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_7XNN(self, opcode: int) -> None:
         """Adds NN to VX (carry flag is not changed)"""
@@ -234,7 +242,7 @@ class Processor:
 
         new_value = (self.registry[registry] + value) & 0xFF
         self.registry[registry] = new_value
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY0(self, opcode: int) -> None:
         """Sets VX to the value of VY"""
@@ -242,7 +250,7 @@ class Processor:
         registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] = self.registry[registry_y]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY1(self, opcode: int) -> None:
         """Sets VX to VX OR VY"""
@@ -250,7 +258,7 @@ class Processor:
         registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] |= self.registry[registry_y]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY2(self, opcode: int) -> None:
         """Sets VX to VX AND VY"""
@@ -258,7 +266,7 @@ class Processor:
         registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] &= self.registry[registry_y]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY3(self, opcode: int) -> None:
         """Sets VX to VX XOR VY"""
@@ -266,7 +274,7 @@ class Processor:
         registry_y = get_third_nibble(opcode)
 
         self.registry[registry_x] ^= self.registry[registry_y]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY4(self, opcode: int) -> None:
         """Vx is set to the value of Vx + Vy. Vy is not affected.
@@ -286,7 +294,7 @@ class Processor:
             self.registry[registry_x] = value
             self.carry_flag = 0b0
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY5(self, opcode: int) -> None:
         """Sets VX = VX - VY.
@@ -313,7 +321,7 @@ class Processor:
             self.registry[registry_x] = value
             self.carry_flag = 0b0
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY6(self, opcode: int) -> None:
         """vX = vY >> 1
@@ -336,7 +344,7 @@ class Processor:
         self.registry[registry_x] = (self.registry[registry_x] >> 1) & 0xFF
         self.carry_flag = shifted
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XY7(self, opcode: int) -> None:
         """Sets VX = VY - VX
@@ -359,7 +367,7 @@ class Processor:
         else:
             self.carry_flag = 0b0
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_8XYE(self, opcode: int) -> None:
         """vX = vY << 1
@@ -381,7 +389,7 @@ class Processor:
         self.registry[registry_x] = (self.registry[registry_x] << 1) & 0xFF
         self.carry_flag = shifted
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_9XY0(self, opcode: int) -> None:
         """Skips the next instruction if VX does not equal VY. (Usually the next
@@ -390,9 +398,9 @@ class Processor:
         registry_y = get_third_nibble(opcode)
 
         if self.registry[registry_x] != self.registry[registry_y]:
-            self.program_counter += 4
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_ANNN(self, opcode: int) -> None:
         """
@@ -403,7 +411,7 @@ class Processor:
         """
         address = opcode & 0x0FFF
         self.index_registry = address
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_BNNN(self, opcode: int) -> None:
         """Jumps to the address NNN plus V0"""
@@ -448,71 +456,79 @@ class Processor:
                         self.carry_flag = 1
                     self.graphics.set(x + x_line, y + y_line, 1)
 
-        self.program_counter += 2
-        self.draw_flag = True
+        self.continue_to_next_instruction()
 
     def opcode_EX9E(self, opcode: int) -> None:
         """Skips the next instruction if the key stored in VX is pressed (usually the
         next instruction is a jump to skip a code block)."""
         registry_x = get_second_nibble(opcode)
 
-        if self.registry[registry_x] == self.keypad.get_pressed_key():
-            self.program_counter += 4
+        if self.keypad.is_key_pressed(self.registry[registry_x]):
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_EXA1(self, opcode: int) -> None:
         """Skips the next instruction if the key stored in VX is not pressed (usually
         the next instruction is a jump to skip a code block)."""
         registry_x = get_second_nibble(opcode)
 
-        if self.registry[registry_x] != self.keypad.get_pressed_key():
-            self.program_counter += 4
+        if not self.keypad.is_key_pressed(self.registry[registry_x]):
+            self.skip_next_instruction()
         else:
-            self.program_counter += 2
+            self.continue_to_next_instruction()
 
     def opcode_FX07(self, opcode: int) -> None:
         """Sets VX to the value of the delay timer."""
         registry_x = get_second_nibble(opcode)
 
         self.registry[registry_x] = self.delay_timer
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX0A(self, opcode: int) -> None:
         """A key press is awaited, and then stored in VX (blocking operation, all
-        instruction halted until next key event)."""
-        registry_x = get_second_nibble(opcode)
+        instruction halted until next key event).
+
+        In other words: Wait for a key to pressed and then released. The original COSMAC
+        VIP only registered the key when it was pressed and then released."""
+        # If the execution is not halted and there is a key available, ignore such
+        # key and continue, halting until there is a new key available.
+        # This is done to mimic the implementation of the original COSMAC VIP, where
+        # this instruction waits for a key to be pressed and then released. In the current
+        # keypad implementation, the key is kept registered until a new one fullfils
+        # the press-release cycle.
+        if not self.withhold_execution and self.keypad.is_key_available():
+            _ = self.keypad.get_pressed_key()
 
         if self.keypad.is_key_available():
-            key = self.keypad.get_pressed_key()
             self.withhold_execution = False
+
+            registry_x = get_second_nibble(opcode)
+            self.registry[registry_x] = self.keypad.get_pressed_key()
+            self.continue_to_next_instruction()
         else:
             self.withhold_execution = True
-
-        if not self.withhold_execution:
-            self.registry[registry_x] = key
-            self.program_counter += 2
 
     def opcode_FX15(self, opcode: int) -> None:
         """Sets the delay timer to VX"""
         registry_x = get_second_nibble(opcode)
 
         self.delay_timer = self.registry[registry_x]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX18(self, opcode: int) -> None:
         """Sets the sound timer to VX"""
         registry_x = get_second_nibble(opcode)
 
         self.sound_timer = self.registry[registry_x]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX1E(self, opcode: int) -> None:
         """Adds VX to I. VF is not affected."""
         registry_x = get_second_nibble(opcode)
 
         self.index_registry += self.registry[registry_x]
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX29(self, opcode: int) -> None:
         """The index register I is set to the address of the hexadecimal character in
@@ -522,7 +538,7 @@ class Processor:
         character = self.registry[registry_x]
         self.index_registry = self.font_memory_map[character]
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX33(self, opcode: int) -> None:
         """It takes the number in VX (which is one byte, so it can be any number
@@ -539,7 +555,7 @@ class Processor:
         self.memory[self.index_registry + 1] = (value // 10) % 10
         self.memory[self.index_registry + 2] = value % 10
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX55(self, opcode: int) -> None:
         """The value of each variable register from V0 to VX inclusive (if X is 0, then
@@ -552,7 +568,7 @@ class Processor:
         for i in range(registry_x + 1):
             self.memory[self.index_registry + i] = self.registry[i]
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def opcode_FX65(self, opcode: int) -> None:
         """The values of each variable register from V0 to VX inclusive (if X is 0, then
@@ -566,7 +582,7 @@ class Processor:
         for i in range(registry_x + 1):
             self.registry[i] = self.memory[self.index_registry + i]
 
-        self.program_counter += 2
+        self.continue_to_next_instruction()
 
     def cycle(self) -> None:
         # Fetch opcode
