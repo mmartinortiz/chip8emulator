@@ -11,7 +11,7 @@ chip8emulator = "chip8emulator.chip8emulator:main"
 [tool.poetry.dependencies]
 python = "^3.12"
 loguru = "^0.7.2"
-arcade = "^2.6.17"
+arcade = "^3.0.0-dev37"
 
 [tool.poetry.group.dev.dependencies]
 tox = "^4"
