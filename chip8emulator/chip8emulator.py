@@ -26,9 +26,9 @@ logger.remove()
 logger.add(sys.stderr, level="DEBUG" if args.debug else "INFO")
 
 
-class Chip8Emulator(arcade.Window):
-    def __init__(self, rom: Path, width: int = 640, height: int = 320):
-        super().__init__(width=width, height=height, title="Chip-8 Emulator")
+class Chip8Emulator(arcade.View):
+    def __init__(self, rom: Path, height: int = 320, width: int = 640):
+        super().__init__()
         self.memory = Memory()
         self.graphics = Graphics()
         self.keypad = Keypad()
@@ -38,6 +38,9 @@ class Chip8Emulator(arcade.Window):
             keypad=self.keypad,
         )
         self.processor.reset()
+        self.rom = rom
+        self.height = height
+        self.width = width
 
         self.keymap = {
             arcade.key.KEY_1: 0x1,
@@ -80,8 +83,8 @@ class Chip8Emulator(arcade.Window):
 
     def setup(self):
         # Load the ROM into memory
-        self.processor.load_program(rom_path)
-        logger.debug(f"ROM {rom_path} loaded into memory")
+        self.processor.load_program(self.rom)
+        logger.debug(f"ROM {self.rom} loaded into memory")
 
     def on_draw(self):
         self.clear()
@@ -108,14 +111,17 @@ class Chip8Emulator(arcade.Window):
         if key == arcade.key.ESCAPE:
             arcade.exit()
 
-    def update(self, delta_time):
+    def on_update(self, delta_time):
         # Emulate one cycle
         self.processor.cycle()
 
 
 def main():
-    window = Chip8Emulator(rom=rom_path)
-    window.setup()
+    window = arcade.Window(width=640, height=320, title="Chip-8 Emulator")
+    chip8 = Chip8Emulator(rom=rom_path)
+    chip8.setup()
+
+    window.show_view(chip8)
     arcade.run()
 
 
