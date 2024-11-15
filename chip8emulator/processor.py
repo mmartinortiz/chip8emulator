@@ -79,6 +79,7 @@ class Processor:
         # Used in the FX0A opcode to wait for a key to be pressed. When the
         # execution is blocked, the CPU will not advance to the next instruction.
         self.withhold_execution = False
+        self.redraw = False
 
     def load_font(self, font_file: Path) -> None:
         if not font_file.exists():
@@ -129,6 +130,7 @@ class Processor:
         self.graphics.clear()
 
         self.continue_to_next_instruction()
+        self.redraw = True
 
     def opcode_00EE(self) -> None:
         """Return from a subroutine. Restore the program counter to the address
@@ -463,6 +465,7 @@ class Processor:
                 self.carry_flag = 1
 
         self.continue_to_next_instruction()
+        self.redraw = True
 
     def opcode_EX9E(self, opcode: int) -> None:
         """Skips the next instruction if the key stored in VX is pressed (usually the

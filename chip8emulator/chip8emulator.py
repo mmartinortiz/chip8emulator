@@ -123,11 +123,13 @@ class Chip8Emulator(arcade.Window):
         logger.debug(f"ROM {self.rom} loaded into memory")
 
     def on_draw(self):
-        self.clear()
-        self.texture.write(self.graphics.pixels)
+        if self.processor.redraw:
+            self.clear()
+            self.texture.write(self.graphics.pixels)
 
-        self.texture.use(0)
-        self.quad.render(self.program)
+            self.texture.use(0)
+            self.quad.render(self.program)
+            self.processor.redraw = False
 
     def on_key_press(self, key, modifiers):
         if key in self.keymap:
