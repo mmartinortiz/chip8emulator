@@ -48,7 +48,8 @@
 					"source.fixAll": "explicit",
 					"source.organizeImports": "explicit"},
 				"cSpell.words": [
-					"bitarray"
+					"bitarray",
+					"COSMAC"
 				]
 			}
 		}
