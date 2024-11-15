@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 import arcade
-from arcade import SpriteList, SpriteSolidColor
+from arcade.gl import geometry
 from loguru import logger
 
 from chip8emulator.graphics import Graphics
@@ -26,9 +26,9 @@ logger.remove()
 logger.add(sys.stderr, level="DEBUG" if args.debug else "INFO")
 
 
-class Chip8Emulator(arcade.View):
-    def __init__(self, rom: Path, height: int = 320, width: int = 640):
-        super().__init__()
+class Chip8Emulator(arcade.Window):
+    def __init__(self, rom: Path, width: int = 640, height: int = 320):
+        super().__init__(width, height, title="Chip-8 Emulator")
         self.memory = Memory()
         self.graphics = Graphics()
         self.keypad = Keypad()
@@ -61,14 +61,50 @@ class Chip8Emulator(arcade.View):
             arcade.key.V: 0xF,
         }
 
-        # Chip8 has only one color
-        self.sprites = SpriteList()
-        for x in range(self.graphics.width):
-            for y in range(self.graphics.height):
-                sprite = SpriteSolidColor(10, 10, arcade.color.WHITE)
-                sprite.center_x = x * 10
-                sprite.center_y = y * 10
-                self.sprites.append(sprite)
+        self.program = self.ctx.program(
+            vertex_shader="""
+            #version 330
+
+            uniform mat4 projection;
+
+            in vec2 in_vert;
+            in vec2 in_uv;
+            out vec2 v_uv;
+
+            void main() {
+                gl_Position = projection * vec4(in_vert, 0.0, 1.0);
+                v_uv = in_uv;
+            }
+            """,
+            fragment_shader="""
+            #version 330
+
+            // Unsigned integer sampler for reading uint data from texture
+            uniform usampler2D screen;
+
+            in vec2 v_uv;
+            out vec4 out_color;
+
+            void main() {
+                // Calculate the bit position on the x axis
+                uint bit_pos = uint(round((v_uv.x * 64) - 0.5)) % 8u;
+                // Create bit mask we can AND the fragment with to extract the pixel value
+                uint flag = uint(pow(2u, 7u - bit_pos));
+                // Read the fragment value (We reverse the y axis here as well)
+                uint frag = texture(screen, v_uv * vec2(1.0, -1.0)).r;
+                // Write the pixel value. Values above 1 will be clamped to 1.
+                out_color = vec4(vec3(frag & flag), 1.0);
+            }
+            """,
+        )
+        # 8 x 4
+        self.program["projection"] = self.projection
+        self.program["screen"] = 0
+        border = 0  # border to test scale
+        self.quad = geometry.screen_rectangle(
+            border, border, width - border * 2, height - border * 2
+        )
+        self.texture = self.ctx.texture((8, 32), components=1, dtype="i1")
 
     def flip_and_scale_y_axis(self, y: int) -> int:
         """For Chip-8, the origin is at the top-left corner, but for arcade, it is at
@@ -87,14 +123,13 @@ class Chip8Emulator(arcade.View):
         logger.debug(f"ROM {self.rom} loaded into memory")
 
     def on_draw(self):
-        self.clear()
-        for sprite in self.sprites:
-            y = self.flip_and_scale_y_axis(sprite.center_y)
-            x = self.scale_x_axis(sprite.center_x)
-            pixel = self.graphics.get(x, y)
-            sprite.color = arcade.color.WHITE if pixel == 1 else arcade.color.BLACK
+        if self.processor.redraw:
+            self.clear()
+            self.texture.write(self.graphics.pixels)
 
-        self.sprites.draw()
+            self.texture.use(0)
+            self.quad.render(self.program)
+            self.processor.redraw = False
 
     def on_key_press(self, key, modifiers):
         if key in self.keymap:
@@ -117,11 +152,9 @@ class Chip8Emulator(arcade.View):
 
 
 def main():
-    window = arcade.Window(width=640, height=320, title="Chip-8 Emulator")
     chip8 = Chip8Emulator(rom=rom_path)
     chip8.setup()
 
-    window.show_view(chip8)
     arcade.run()
 
 

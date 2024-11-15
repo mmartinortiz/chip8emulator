@@ -8,7 +8,7 @@
       "cwd": "${workspaceFolder}",
       "module": "chip8emulator.chip8emulator",
       "justMyCode": false,
-      "args": ["roms/4-flags.ch8"]
+      "args": ["roms/IBM Logo.ch8"]
     }
   ]
 }

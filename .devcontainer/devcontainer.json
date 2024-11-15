@@ -9,7 +9,8 @@
 	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/devcontainers-extra/features/poetry": "latest"
+		"ghcr.io/devcontainers-extra/features/poetry": "latest",
+		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest"
 	},
 	"runArgs": [
 		"--device=/dev/dri",
@@ -27,7 +28,9 @@
 			"extensions": [
 				"tamasfe.even-better-toml",
 				"charliermarsh.ruff",
-				"ms-vscode.hexeditor"
+				"ms-vscode.hexeditor",
+				"streetsidesoftware.code-spell-checker",
+				"njpwerner.autodocstring"
 			],
 			"settings": {
 				"python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
@@ -38,6 +41,14 @@
 				"python.testing.pytestArgs": [
 					"tests",
 					"--no-cov"
+				],
+				"editor.defaultFormatter": "charliermarsh.ruff",
+				"editor.formatOnSave": true,
+				"editor.codeActionsOnSave": {
+					"source.fixAll": "explicit",
+					"source.organizeImports": "explicit"},
+				"cSpell.words": [
+					"bitarray"
 				]
 			}
 		}
