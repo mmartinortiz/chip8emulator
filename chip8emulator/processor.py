@@ -431,11 +431,15 @@ class Processor:
 
     def opcode_DXYN(self, opcode: int) -> None:
         """
-        Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height
-        of N pixels. Each row of 8 pixels is read as bit-coded starting from memory
-        location I; I value doesn't change after the execution of this instruction.
-        As described above, VF is set to 1 if any screen pixels are flipped from set
-        to unset when the sprite is drawn, and to 0 if that doesn't happen.
+        It will draw an N pixels tall sprite from the memory location that the I index
+        register is holding to the screen, at the horizontal X coordinate in VX and
+        the Y coordinate in VY.
+
+        All the pixels that are “on” in the sprite will flip the pixels on the screen
+        that it is drawn to (from left to right, from most to least significant bit).
+
+        If any pixels on the screen were turned “off” by this, the VF flag register
+        is set to 1. Otherwise, it's set to 0.
         """
         registry_x = get_second_nibble(opcode)
         registry_y = get_third_nibble(opcode)
@@ -446,15 +450,17 @@ class Processor:
 
         self.carry_flag = 0
 
-        for y_line in range(0, height):
-            pixel = self.memory[self.index_registry + y_line]
+        sprite = self.memory[self.index_registry : self.index_registry + height]
 
-            for x_line in range(0, 8):
-                # Check if the bit of the pixel to be drawn is set to 1
-                if (pixel & (0x80 >> x_line)) != 0:
-                    if self.graphics.get(x + x_line, y + y_line) == 1:
-                        self.carry_flag = 1
-                    self.graphics.set(x + x_line, y + y_line, 1)
+        for line, sprite_line in enumerate(sprite):
+            screen_line = self.graphics.get_byte(x, y + line)
+
+            # Perform a bitwise XOR operation to flip the pixels
+            self.graphics.set_byte(x, y + line, sprite_line ^ screen_line)
+
+            # If any pixel on the screen was turned off, set the carry flag to 1
+            if self.carry_flag == 0 and sprite_line & screen_line > 0:
+                self.carry_flag = 1
 
         self.continue_to_next_instruction()
 

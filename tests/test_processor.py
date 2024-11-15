@@ -2,6 +2,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from bitarray import util
 
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
@@ -422,48 +423,26 @@ def test_opcode_CXNN(processor, registry, opcode, expected, monkeypatch):
         (
             0x4,
             0x5,
-            0x3,
-            0x1,
-            0x1,
-            1,
-            [0x00, 0x3C, 0xC3, 0xFF, 0xFF],
-            [list(0 for _ in range(10)) for _ in range(6)],
-            [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-                [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            ],
+            0x2,
+            0x0,
+            0x0,
             0,
+            [0x18, 0x00],
+            util.hex2ba("1800"),
+            util.hex2ba("0000"),
+            1,
         ),
         (
-            4,
-            5,
-            3,
-            0x1,
-            0x1,
-            1,
-            [0x00, 0x3C, 0xC3, 0xFF, 0xFF],
-            # For the current state of the pixels, we expect a collision.
-            [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            ],
-            [
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-                [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
-                [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            ],
-            1,
+            0x4,
+            0x5,
+            0x2,
+            0x0,
+            0x0,
+            0,
+            [0xE7, 0x00],
+            util.hex2ba("1800"),
+            util.hex2ba("FF00"),
+            0,
         ),
     ],
 )
@@ -484,7 +463,9 @@ def test_opcode_DXYN(
     processor.registry[registry_x] = x
     processor.registry[registry_y] = y
     processor.index_registry = index_registry
-    processor.memory.memory = memory
+    processor.memory = memory
+    processor.graphics.width = 8
+    processor.graphics.height = 2
     processor.graphics.pixels = pixels
     processor.opcode_DXYN(int(f"0xD{registry_x}{registry_y}{height}", 16))
 
