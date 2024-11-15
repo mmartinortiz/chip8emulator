@@ -405,16 +405,18 @@ def test_opcode_BNNN(processor, opcode, v0, expected_program_counter):
     assert processor.program_counter == expected_program_counter
 
 
-@pytest.mark.parametrize("registry, opcode, expected", [(3, 0xC3AA, 0xA)])
+@pytest.mark.parametrize("registry, opcode, expected", [(3, 0xC3AA, 0xAA)])
 def test_opcode_CXNN(processor, registry, opcode, expected, monkeypatch):
     def mock_randint(a, b):
-        return 0xF
+        return 0xFF
 
     monkeypatch.setattr("random.randint", mock_randint)
 
+    processor.program_counter = 0x110
     processor.opcode_CXNN(opcode)
 
     assert processor.registry[registry] == expected
+    assert processor.program_counter == 0x112
 
 
 @pytest.mark.parametrize(

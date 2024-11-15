@@ -435,6 +435,7 @@ class Processor:
         random_value = random.randint(0, 255)
 
         self.registry[registry] = random_value & value
+        self.continue_to_next_instruction()
 
     def opcode_DXYN(self, opcode: int) -> None:
         """
