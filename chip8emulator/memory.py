@@ -1,21 +1,27 @@
-from collections import UserDict
+from collections import UserList
 
 
-class Memory(UserDict):
-    def __init__(self):
-        self.size = 4096
-        self.memory = [0x0] * self.size
+class Memory(UserList):
+    def __init__(self, data: list[int] = None):
+        if data:
+            self.data = data
+        else:
+            self.data = [0x0] * 4096
 
     def _validate_address(self, address: int) -> bool:
-        if 0 < address > self.size:
+        if 0 < address > len(self.data):
             raise ValueError(f"Memory address {address} is not valid")
 
         return True
 
-    def __getitem__(self, address: int) -> int:
-        self._validate_address(address)
+    def __getitem__(self, address: int | slice) -> int:
+        if isinstance(address, slice):
+            self._validate_address(address.start)
+            self._validate_address(address.stop)
+        else:
+            self._validate_address(address)
 
-        return self.memory[address]
+        return self.data[address]
 
     def __setitem__(self, address: int, value: bytes | int) -> int:
         self._validate_address(address)
@@ -26,6 +32,6 @@ class Memory(UserDict):
         if isinstance(value, bytes):
             value = int.from_bytes(value, byteorder="big")
 
-        self.memory[address] = value
+        self.data[address] = value
 
-        return self.memory[address]
+        return self.data[address]
