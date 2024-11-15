@@ -60,7 +60,7 @@ def test_as_list_of_integers(pixels, expected):
 @pytest.mark.parametrize(
     "pixels, expected",
     [
-        (bitarray("10100101"), "1010\n0101"),
+        (bitarray("10100101"), "X.X.\n.X.X"),
     ],
 )
 def test_print(pixels, expected):
