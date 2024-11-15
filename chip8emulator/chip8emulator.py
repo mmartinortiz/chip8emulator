@@ -27,7 +27,7 @@ logger.add(sys.stderr, level="DEBUG" if args.debug else "INFO")
 
 
 class Chip8Emulator(arcade.Window):
-    def __init__(self, rom: Path, width: int = 640, height: int = 320):
+    def __init__(self, rom: Path, width: int = 640, height: int = 320, ips: int = 700):
         super().__init__(width, height, title="Chip-8 Emulator")
         self.memory = Memory()
         self.graphics = Graphics()
@@ -41,6 +41,10 @@ class Chip8Emulator(arcade.Window):
         self.rom = rom
         self.height = height
         self.width = width
+        self.fps = 60
+
+        # Instructions per second
+        self.ips = ips
 
         self.keymap = {
             arcade.key.KEY_1: 0x1,
@@ -138,17 +142,17 @@ class Chip8Emulator(arcade.Window):
             logger.debug(f"Key {key} not mapped")
 
     def on_key_release(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            arcade.exit()
+
         if key in self.keymap:
             self.keypad.release_key(self.keymap[key])
         else:
             logger.debug(f"Key {key} not mapped")
 
-        if key == arcade.key.ESCAPE:
-            arcade.exit()
-
     def on_update(self, delta_time):
-        # Emulate one cycle
-        self.processor.cycle()
+        self.processor.emulate(7)
+        # self.processor.emulate(self.ips // self.fps)
 
 
 def main():

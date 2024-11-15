@@ -1,6 +1,8 @@
 import random
 from pathlib import Path
 
+from loguru import logger
+
 from chip8emulator.decoder import decode
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
@@ -79,6 +81,9 @@ class Processor:
         # Used in the FX0A opcode to wait for a key to be pressed. When the
         # execution is blocked, the CPU will not advance to the next instruction.
         self.withhold_execution = False
+
+        # Flag to indicate that the screen needs to be redrawn. The game engine
+        # will set it to False once the screen is redrawn.
         self.redraw = False
 
     def load_font(self, font_file: Path) -> None:
@@ -504,7 +509,7 @@ class Processor:
         # key and continue, halting until there is a new key available.
         # This is done to mimic the implementation of the original COSMAC VIP, where
         # this instruction waits for a key to be pressed and then released. In the current
-        # keypad implementation, the key is kept registered until a new one fullfils
+        # keypad implementation, the key is kept registered until a new one fulfils
         # the press-release cycle.
         if not self.withhold_execution and self.keypad.is_key_available():
             _ = self.keypad.get_pressed_key()
@@ -593,7 +598,17 @@ class Processor:
 
         self.continue_to_next_instruction()
 
-    def cycle(self) -> None:
+    def emulate(self, cycles: int) -> None:
+        """
+        Emulate "n" cycles of the CPU. Use this method as main loop of the emulator.
+        """
+        for _ in range(cycles):
+            opcode = self.cycle()
+
+            logger.debug(f"Opcode: {hex(opcode)}")
+        logger.debug("Emulation cycle finished")
+
+    def cycle(self) -> int:
         # Fetch opcode
         opcode = self.fetch_opcode()
 
@@ -672,6 +687,8 @@ class Processor:
 
         # Update timers
         self.update_timers()
+
+        return opcode
 
     def update_timers(self) -> None:
         """
