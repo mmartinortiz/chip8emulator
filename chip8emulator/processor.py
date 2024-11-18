@@ -453,8 +453,8 @@ class Processor:
         registry_y = get_third_nibble(opcode)
         height = get_fourth_nibble(opcode)
 
-        x = self.registry[registry_x]
-        y = self.registry[registry_y]
+        x = self.registry[registry_x] % self.graphics.width
+        y = self.registry[registry_y] % self.graphics.height
 
         self.carry_flag = 0
 
