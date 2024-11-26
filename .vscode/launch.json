@@ -2,13 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "CHIP-8",
+      "name": "Pong",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "module": "chip8emulator.chip8emulator",
       "justMyCode": false,
-      "args": ["roms/IBM Logo.ch8"]
+      "args": ["roms/Pong.ch8"]
     }
   ]
 }
