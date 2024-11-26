@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from bitarray import util
+from bitarray import bitarray
 
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
@@ -420,55 +420,62 @@ def test_opcode_CXNN(processor, registry, opcode, expected, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "registry_x, registry_y, height, x, y, index_registry, memory, pixels, expected, carry",
+    "x, y, height, memory, expected, carry",
     [
         (
-            0x4,
-            0x5,
-            0x2,
-            0x0,
-            0x0,
             0,
-            [0x18, 0x00],
-            util.hex2ba("1800"),
-            util.hex2ba("0000"),
+            0,
+            2,
+            [
+                0x33,
+                0xCC,
+            ],
+            [
+                bitarray("0000 0000 0011 0011"),
+                bitarray("0000 0000 1100 1100"),
+            ],
             1,
         ),
         (
-            0x4,
-            0x5,
-            0x2,
-            0x0,
-            0x0,
+            12,
             0,
-            [0xE7, 0x00],
-            util.hex2ba("1800"),
-            util.hex2ba("FF00"),
+            2,
+            [
+                0xCC,
+                0x33,
+            ],
+            [
+                bitarray("0011 0011 0011 1111"),
+                bitarray("1100 1100 1100 1111"),
+            ],
             0,
         ),
     ],
 )
 def test_opcode_DXYN(
     processor,
-    registry_x,
-    registry_y,
-    height,
     x,
     y,
-    index_registry,
+    height,
     memory,
-    pixels,
     expected,
     carry,
 ):
+    registry_x = 0x3
+    registry_y = 0x4
+    processor.reset()
     processor.program_counter = 0x110
     processor.registry[registry_x] = x
     processor.registry[registry_y] = y
-    processor.index_registry = index_registry
+    processor.index_registry = 0
     processor.memory = memory
-    processor.graphics.width = 8
+    processor.graphics.width = 16
     processor.graphics.height = 2
-    processor.graphics.pixels = pixels
+    processor.graphics.pixels = [
+        bitarray("0011 0011 0011 0011"),
+        bitarray("1100 1100 1100 1100"),
+    ]
+
     processor.opcode_DXYN(int(f"0xD{registry_x}{registry_y}{height}", 16))
 
     assert processor.graphics.pixels == expected

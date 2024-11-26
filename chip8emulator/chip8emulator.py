@@ -129,7 +129,7 @@ class Chip8Emulator(arcade.Window):
     def on_draw(self):
         if self.processor.redraw:
             self.clear()
-            self.texture.write(self.graphics.pixels)
+            self.texture.write(self.graphics.as_bitarray())
 
             self.texture.use(0)
             self.quad.render(self.program)

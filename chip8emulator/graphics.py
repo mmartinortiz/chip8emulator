@@ -1,3 +1,5 @@
+from functools import reduce
+
 from bitarray import bitarray
 from bitarray.util import ba2int, int2ba
 
@@ -20,7 +22,7 @@ class Graphics:
         """
         Clear the screen by setting all pixels to 0.
         """
-        self.pixels = bitarray(self.width * self.height)
+        self.pixels = [bitarray("0" * self.width) for _ in range(self.height)]
 
     def get(self, x: int, y: int) -> int:
         """
@@ -34,7 +36,12 @@ class Graphics:
         Returns:
             int: Value of the pixel at the specified coordinates.
         """
-        return self.pixels[x + (self.width * y)]
+        if x >= self.width or y >= self.height:
+            raise IndexError(
+                f"Pixel out of bounds: ({x}, {y}). Screen size: {self.width}x{self.height}"
+            )
+
+        return self.pixels[y][x]
 
     def get_byte(self, x: int, y: int) -> int:
         """
@@ -48,7 +55,24 @@ class Graphics:
         Returns:
             int: Value of the pixel byte at the specified coordinates.
         """
-        return ba2int(self.pixels[x + (self.width * y) : x + (self.width * y) + 8])
+        if x >= self.width or y >= self.height:
+            raise IndexError(
+                f"Pixel out of bounds: ({x}, {y}). Screen size: {self.width}x{self.height}"
+            )
+
+        length = 8
+        end = x + length
+
+        if end > self.width:
+            end = self.width
+            length = end - x
+
+        screen_line = self.pixels[y][x:end]
+        if len(screen_line) == 8:
+            return ba2int(screen_line, signed=False)
+        else:
+            rest = self.pixels[y][0 : 8 - len(screen_line)]
+            return ba2int(screen_line + rest, signed=False)
 
     def set(self, x: int, y: int, value: int) -> None:
         """
@@ -60,7 +84,15 @@ class Graphics:
             y (int): Y coordinate.
             value (int): Value to set the pixel-byte to.
         """
-        self.pixels[x + (self.width * y)] = value
+        if x >= self.width or y >= self.height:
+            raise IndexError(
+                f"Pixel out of bounds: ({x}, {y}). Screen size: {self.width}x{self.height}"
+            )
+
+        if value not in (0, 1):
+            raise ValueError("Pixel value must be 0 or 1")
+
+        self.pixels[y][x] = value
 
     def set_byte(self, x: int, y: int, value: int) -> None:
         """
@@ -72,9 +104,23 @@ class Graphics:
             y (int): Y coordinate.
             value (int): Value to set the pixel-byte to.
         """
-        self.pixels[x + (self.width * y) : x + (self.width * y) + 8] = int2ba(
-            value, length=8
-        )
+        if x >= self.width or y >= self.height:
+            raise IndexError(
+                f"Pixel out of bounds: ({x}, {y}). Screen size: {self.width}x{self.height}"
+            )
+
+        if value < 0 or value > 255:
+            raise ValueError("Pixel value must be between 0 and 255 (0xFF)")
+
+        length = 8
+        end = x + length
+
+        if end > self.width:
+            end = self.width
+            length = end - x
+
+        # Keep always a length of 8 bits
+        self.pixels[y][x:end] = int2ba(value, length=8)[:length]
 
     def as_list_of_integers(self) -> list[int]:
         """
@@ -82,17 +128,18 @@ class Graphics:
         """
         return [ba2int(self.pixels[i : i + 8]) for i in range(0, len(self.pixels), 8)]
 
+    def as_bitarray(self) -> bitarray:
+        """
+        Convert the pixel values to a bitarray.
+        """
+        return reduce(lambda x, y: x + y, self.pixels)
+
     def __repr__(self) -> str:
         """
         Print the graphic's pixels as a string of 'X' and '.' to represent the 1s and 0s.
         """
         rows = []
-        for row in range(0, self.height * self.width, self.width):
-            rows.append(
-                self.pixels[row : row + self.width]
-                .to01()
-                .replace("1", "X")
-                .replace("0", ".")
-            )
+        for row in self.pixels:
+            rows.append(row.to01().replace("1", "X").replace("0", "."))
 
         return "\n".join(rows)
