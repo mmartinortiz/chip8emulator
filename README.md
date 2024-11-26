@@ -4,7 +4,15 @@ An emulator for the CHIP-8 Chip written in Python. A small project for learning 
 
 ## Development
 
-This project uses [poetry](https://python-poetry.org/) for dependency management. If you do not have `poetry` installed, check the [installation guide](https://python-poetry.org/docs/#installation).
+The project uses [devcontainers](https://containers.dev) to generate a development environment. However, if you do not want to use it, you can always use `poetry` directly.
+
+## Running the emulator
+
+You can run the emulator without installing the package:
+
+```bash
+poetry run python -m chip8_emulator <path_to_rom>
+```
 
 ## References
 
