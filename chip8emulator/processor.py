@@ -461,6 +461,10 @@ class Processor:
         sprite = self.memory[self.index_registry : self.index_registry + height]
 
         for line, sprite_line in enumerate(sprite):
+            # If the drawing is out of bounds, clip it
+            if y + line >= self.graphics.height:
+                break
+
             screen_line = self.graphics.get_byte(x, y + line)
 
             # Perform a bitwise XOR operation to flip the pixels
