@@ -3,13 +3,11 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
-	"containerEnv": {
-		"POETRY_VIRTUALENVS_CREATE": "true",
-		"POETRY_VIRTUALENVS_IN_PROJECT": "true"
-	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/devcontainers-extra/features/poetry": "latest",
+		"ghcr.io/va-h/devcontainers-features/uv:1": {
+			"shellautocompletion": true
+		},
 		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest"
 	},
 	"runArgs": [
@@ -47,7 +45,8 @@
 					"editor.formatOnSave": true,
 					"editor.codeActionsOnSave": {
 						"source.fixAll": "explicit",
-						"source.organizeImports": "explicit"}
+						"source.organizeImports": "explicit"
+					}
 				},
 				"ruff.organizeImports": true,
 				"cSpell.words": [

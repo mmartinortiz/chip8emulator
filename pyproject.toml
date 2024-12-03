@@ -1,30 +1,36 @@
-[tool.poetry]
+[project]
 name = "chip8emulator"
 version = "0.1.0"
+authors = [{ name = "Manuel", email = "mmartinortiz@gmail.com" }]
 description = "An emulator of CHIP-8"
-authors = ["Manuel <mmartinortiz@gmail.com>"]
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "arcade>=3.0.0-dev37",
+  "bitarray>=3.0.0",
+  "loguru>=0.7.2",
+  "pyglet>=2.1.dev7",
+]
 
-[tool.poetry.scripts]
-chip8emulator = "chip8emulator.chip8emulator:main"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-loguru = "^0.7.2"
-arcade = "^3.0.0-dev37"
-bitarray = "^3.0.0"
-
-[tool.poetry.group.dev.dependencies]
-tox = "^4"
-pytest = "^7"
-ruff = "^0"
-pre-commit = "^3"
-ipython = "^8.24.0"
-pytest-cov = "^5.0.0"
+[dependency-groups]
+dev = [
+  "ipython>=8.30.0",
+  "pre-commit>=4.0.1",
+  "pytest>=8.3.4",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.8.1",
+  "tox>=4.23.2",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["chip8emulator"]
+
+[project.scripts]
+chip8emulator = "chip8emulator.chip8emulator:main"
 
 [tool.pytest.ini_options]
 addopts = "--cov=chip8emulator --cov-report=term-missing"
