@@ -6,14 +6,19 @@ An emulator for the CHIP-8 Chip written in Python. A small project for learning 
 
 ## Development
 
-The project uses [devcontainers](https://containers.dev) to generate a development environment. However, if you do not want to use it, you can always use `poetry` directly.
+The project uses [devcontainers](https://containers.dev) to generate a development environment. However, you can always setup a local environment by installing the dependencies listed in the `pyproject.toml` file, using, for example, [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync
+```
 
 ## Running the emulator
 
 You can run the emulator without installing the package:
 
 ```bash
-poetry run python -m chip8_emulator <path_to_rom>
+source .venv/bin/activate
+python -m chip8_emulator <path_to_rom>
 ```
 
 ## References
