@@ -1,10 +1,18 @@
 import argparse
 import sys
 from pathlib import Path
+from typing import List
 
-import arcade
-from arcade.gl import geometry
+from bitarray import bitarray
 from loguru import logger
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsScene,
+    QGraphicsView,
+    QMainWindow,
+)
 
 from chip8emulator.graphics import Graphics
 from chip8emulator.keypad import Keypad
@@ -13,6 +21,7 @@ from chip8emulator.processor import Processor
 
 parser = argparse.ArgumentParser()
 parser.add_argument("rom_path", nargs="?", default="roms/IBM Logo.ch8")
+parser.add_argument("--ips", type=int, default=10, help="Instructions per second")
 parser.add_argument(
     "--debug",
     action="store_true",
@@ -20,146 +29,155 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-rom_path = Path(args.rom_path)
-
 logger.remove()
 logger.add(sys.stderr, level="DEBUG" if args.debug else "INFO")
 
 
-class Chip8Emulator(arcade.Window):
-    def __init__(self, rom: Path, width: int = 640, height: int = 320, ips: int = 700):
-        super().__init__(width, height, title="Chip-8 Emulator")
-        self.memory = Memory()
-        self.graphics = Graphics()
-        self.keypad = Keypad()
+class Chip8Screen(QGraphicsView):
+    def __init__(self, graphic_system: Graphics, scale_factor: int = 10):
+        super().__init__()
+        self.width = graphic_system.width
+        self.height = graphic_system.height
+        self.setMinimumSize(
+            self.width * scale_factor,
+            self.height * scale_factor,
+        )
+        self.scale(scale_factor, scale_factor)
+
+        # Scene is the container that holds all the graphical elements
+        self.scene = QGraphicsScene()
+        self.setScene(self.scene)
+
+        # Image is the actual image that will be rendered
+        self.image = QImage(self.width, self.height, QImage.Format_Mono)
+        self.scene.addPixmap(QPixmap.fromImage(self.image))
+
+    def refresh(self, pixels: List[bitarray]):
+        self.scene.clear()
+
+        # Update the image with the current status of the pixels
+        for y, row in enumerate(pixels):
+            for x, pixel in enumerate(row):
+                self.image.setPixel(x, y, int(pixel))
+
+        self.scene.addPixmap(QPixmap.fromImage(self.image))
+
+
+class Chip8MainWindow(QMainWindow):
+    """
+    The main window of the Chip-8 emulator application. It contains all the widgets
+    and graphical elements of the application. It also handles the key events.
+    """
+
+    def __init__(self, chip8: Processor, screen: Chip8Screen):
+        super().__init__()
+        self.chip8 = chip8
+        self.setCentralWidget(screen)
+        self.setWindowTitle("Chip-8 Emulator")
+
+        self.keymap = {
+            Qt.Key.Key_1: 0x1,
+            Qt.Key.Key_2: 0x2,
+            Qt.Key.Key_3: 0x3,
+            Qt.Key.Key_4: 0xC,
+            Qt.Key.Key_Q: 0x4,
+            Qt.Key.Key_W: 0x5,
+            Qt.Key.Key_E: 0x6,
+            Qt.Key.Key_R: 0xD,
+            Qt.Key.Key_A: 0x7,
+            Qt.Key.Key_S: 0x8,
+            Qt.Key.Key_D: 0x9,
+            Qt.Key.Key_F: 0xE,
+            Qt.Key.Key_Z: 0xA,
+            Qt.Key.Key_X: 0x0,
+            Qt.Key.Key_C: 0xB,
+            Qt.Key.Key_V: 0xF,
+        }
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in self.keymap:
+            self.chip8.keypad.press_key(self.keymap[key])
+        else:
+            logger.debug(f"Key {key} not mapped")
+
+    def keyReleaseEvent(self, event):
+        key = event.key()
+        if key == Qt.Key.Key_Escape:
+            self.close()
+        elif key == Qt.Key.Key_P:
+            print(self.chip8.graphics)
+
+        if key in self.keymap:
+            self.chip8.keypad.release_key(self.keymap[key])
+        else:
+            logger.debug(f"Key {key} not mapped")
+
+
+class Chip8Application(QApplication):
+    """
+    The application itself. If creates the Application window where the Emulator will
+    be rendered and the Chip-8 emulator itself.
+
+    This is the class that controls when the emulator runs its cycles and updates the
+    screen of the emulated system.
+    """
+
+    def __init__(self, rom: Path, ips: int = 10):
+        """
+        Args:
+            rom (Path): Path to the ROM file that will be loaded into the emulator.
+            ips (int, optional): Instructions Per Second. Defaults to 7.
+        """
+        super().__init__()
         self.processor = Processor(
-            memory=self.memory,
-            graphics=self.graphics,
-            keypad=self.keypad,
+            memory=Memory(),
+            graphics=Graphics(),
+            keypad=Keypad(),
         )
         self.processor.reset()
         self.rom = rom
-        self.height = height
-        self.width = width
-        self.fps = 60
-
-        # Instructions per second
         self.ips = ips
 
-        self.keymap = {
-            arcade.key.KEY_1: 0x1,
-            arcade.key.KEY_2: 0x2,
-            arcade.key.KEY_3: 0x3,
-            arcade.key.KEY_4: 0xC,
-            arcade.key.Q: 0x4,
-            arcade.key.W: 0x5,
-            arcade.key.E: 0x6,
-            arcade.key.R: 0xD,
-            arcade.key.A: 0x7,
-            arcade.key.S: 0x8,
-            arcade.key.D: 0x9,
-            arcade.key.F: 0xE,
-            arcade.key.Z: 0xA,
-            arcade.key.X: 0x0,
-            arcade.key.C: 0xB,
-            arcade.key.V: 0xF,
-        }
+        # Differences between the Window and the Screen:
+        # - The Window contains all the elements visible to the user
+        # - The Screen is the area where the CHIP-8 graphics are rendered
+        # The screen is used directly to update the rendered image with the content
+        # of the CHIP-8 graphics. It is also passed to the Window, so it can be
+        # incorporated to the main window application.
+        self.screen = Chip8Screen(self.processor.graphics)
+        self.main_window = Chip8MainWindow(self.processor, self.screen)
 
-        self.program = self.ctx.program(
-            vertex_shader="""
-            #version 330
+        self.timer = QTimer()
+        self.timer.setInterval(1 / self.ips * 1000)
+        self.timer.timeout.connect(self.update)
 
-            uniform mat4 projection;
-
-            in vec2 in_vert;
-            in vec2 in_uv;
-            out vec2 v_uv;
-
-            void main() {
-                gl_Position = projection * vec4(in_vert, 0.0, 1.0);
-                v_uv = in_uv;
-            }
-            """,
-            fragment_shader="""
-            #version 330
-
-            // Unsigned integer sampler for reading uint data from texture
-            uniform usampler2D screen;
-
-            in vec2 v_uv;
-            out vec4 out_color;
-
-            void main() {
-                // Calculate the bit position on the x axis
-                uint bit_pos = uint(round((v_uv.x * 64) - 0.5)) % 8u;
-                // Create bit mask we can AND the fragment with to extract the pixel value
-                uint flag = uint(pow(2u, 7u - bit_pos));
-                // Read the fragment value (We reverse the y axis here as well)
-                uint frag = texture(screen, v_uv * vec2(1.0, -1.0)).r;
-                // Write the pixel value. Values above 1 will be clamped to 1.
-                out_color = vec4(vec3(frag & flag), 1.0);
-            }
-            """,
-        )
-        # 8 x 4
-        self.program["projection"] = self.projection
-        self.program["screen"] = 0
-        border = 0  # border to test scale
-        self.quad = geometry.screen_rectangle(
-            border, border, width - border * 2, height - border * 2
-        )
-        self.texture = self.ctx.texture((8, 32), components=1, dtype="i1")
-
-    def flip_and_scale_y_axis(self, y: int) -> int:
-        """For Chip-8, the origin is at the top-left corner, but for arcade, it is at
-        the bottom-left corner. This function flips the y-axis and scales it to the
-        arcade window size.
+    def start(self):
         """
-        return (self.height // 10) - (y // 10) - 1
-
-    def scale_x_axis(self, x: int) -> int:
-        """Scale the x-axis to the arcade window size."""
-        return x // 10
-
-    def setup(self):
+        After initialization, start the application.
+        """
         # Load the ROM into memory
+        self.processor.reset()
         self.processor.load_program(self.rom)
         logger.debug(f"ROM {self.rom} loaded into memory")
 
-    def on_draw(self):
-        if self.processor.redraw:
-            self.clear()
-            self.texture.write(self.graphics.as_bitarray())
+        # Start the timer that will trigger the emulator's cycles
+        self.timer.start()
 
-            self.texture.use(0)
-            self.quad.render(self.program)
-            self.processor.redraw = False
+        # Show the main window
+        self.main_window.show()
 
-    def on_key_press(self, key, modifiers):
-        if key in self.keymap:
-            self.keypad.press_key(self.keymap[key])
-        else:
-            logger.debug(f"Key {key} not mapped")
-
-    def on_key_release(self, key, modifiers):
-        if key == arcade.key.ESCAPE:
-            arcade.exit()
-
-        if key in self.keymap:
-            self.keypad.release_key(self.keymap[key])
-        else:
-            logger.debug(f"Key {key} not mapped")
-
-    def on_update(self, delta_time):
+    def update(self):
         self.processor.emulate(7)
-        # self.processor.emulate(self.ips // self.fps)
+        if self.processor.redraw:
+            self.screen.refresh(self.processor.graphics.pixels)
 
 
 def main():
-    chip8 = Chip8Emulator(rom=rom_path)
-    chip8.setup()
+    app = Chip8Application(rom=Path(args.rom_path), ips=args.ips)
+    app.start()
 
-    arcade.run()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
