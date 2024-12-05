@@ -8,7 +8,8 @@
 		"ghcr.io/va-h/devcontainers-features/uv:1": {
 			"shellautocompletion": true
 		},
-		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest"
+		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest",
+		"ghcr.io/devcontainers-extra/features/starship:1": {}
 	},
 	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
