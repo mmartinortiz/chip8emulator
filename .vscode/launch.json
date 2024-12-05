@@ -9,6 +9,15 @@
       "module": "chip8emulator.chip8emulator",
       "justMyCode": false,
       "args": ["roms/Pong.ch8"]
+    },
+    {
+      "name": "IBM Logo",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "module": "chip8emulator.chip8emulator",
+      "justMyCode": false,
+      "args": ["roms/IBM Logo.ch8"]
     }
   ]
 }
