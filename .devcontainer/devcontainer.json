@@ -11,6 +11,9 @@
 		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest",
 		"ghcr.io/devcontainers-extra/features/starship:1": {}
 	},
+	"mounts": [
+		"source=${localEnv:HOME}/.local/share/fish/fish_history,target=/home/vscode/.local/share/fish/fish_history,type=bind"
+	],
 	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
