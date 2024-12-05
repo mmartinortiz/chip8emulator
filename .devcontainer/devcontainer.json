@@ -8,17 +8,11 @@
 		"ghcr.io/va-h/devcontainers-features/uv:1": {
 			"shellautocompletion": true
 		},
-		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest"
+		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest",
+		"ghcr.io/devcontainers-extra/features/starship:1": {}
 	},
-	"runArgs": [
-		"--device=/dev/dri",
-		// "--env=WAYLAND_DISPLAY=${localEnv:WAYLAND_DISPLAY}",
-		"--network=host"
-	],
-	"initializeCommand": "xhost +local:docker",
 	"mounts": [
-		"source=${localEnv:HOME}/.bash_history,target=/home/vscode/.bash_history,type=bind,consistency=cached"
-		// 	"source=${localEnv:XAUTHORITY},target=/home/vscode/.Xauthority,type=bind,consistency=cached"
+		"source=${localEnv:HOME}/.local/share/fish/fish_history,target=/home/vscode/.local/share/fish/fish_history,type=bind"
 	],
 	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
@@ -51,7 +45,8 @@
 				"ruff.organizeImports": true,
 				"cSpell.words": [
 					"bitarray",
-					"COSMAC"
+					"COSMAC",
+					"Pixmap"
 				]
 			}
 		}
