@@ -86,6 +86,8 @@ class Processor:
         # will set it to False once the screen is redrawn.
         self.redraw = False
 
+        self.sound_flag = False
+
     def load_font(self, font_file: Path) -> None:
         if not font_file.exists():
             raise FileNotFoundError(f"Font file {font_file} not found")
@@ -705,5 +707,6 @@ class Processor:
 
         if self.sound_timer > 0:
             if self.sound_timer == 1:
+                self.sound_flag = True
                 print("BEEP")
             self.sound_timer -= 1

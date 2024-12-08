@@ -5,8 +5,9 @@ from typing import List
 
 from bitarray import bitarray
 from loguru import logger
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtMultimedia import QSoundEffect
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsScene,
@@ -152,6 +153,11 @@ class Chip8Application(QApplication):
         self.timer.setInterval(1 / self.ips * 1000)
         self.timer.timeout.connect(self.update)
 
+        self.beep = QSoundEffect()
+        self.beep.setSource(
+            QUrl.fromLocalFile(Path(__file__).parent.absolute() / Path("beep.wav"))
+        )
+
     def start(self):
         """
         After initialization, start the application.
@@ -171,6 +177,10 @@ class Chip8Application(QApplication):
         self.processor.emulate(7)
         if self.processor.redraw:
             self.screen.refresh(self.processor.graphics.pixels)
+
+        if self.processor.sound_flag:
+            self.beep.play()
+            self.processor.sound_flag = False
 
 
 def main():
