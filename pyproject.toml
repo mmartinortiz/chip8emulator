@@ -1,6 +1,6 @@
 [project]
 name = "chip8emulator"
-version = "0.1.0"
+version = "1.0.0"
 authors = [{ name = "Manuel", email = "mmartinortiz@gmail.com" }]
 description = "An emulator of CHIP-8"
 readme = "README.md"
