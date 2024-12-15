@@ -125,8 +125,6 @@ class Graphics:
         else:
             self.pixels[y][x:end] = int2ba(value, length=8)[:length]
 
-        pass
-
     def as_list_of_integers(self) -> list[int]:
         """
         Convert the pixel values to a list of integers.
