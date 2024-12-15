@@ -445,8 +445,8 @@ def test_opcode_CXNN(processor, registry, opcode, expected, monkeypatch):
                 0x33,
             ],
             [
-                bitarray("0011 0011 0011 1111"),
-                bitarray("1100 1100 1100 1111"),
+                bitarray("1111 0011 0011 1111"),
+                bitarray("1111 1100 1100 1111"),
             ],
             0,
         ),

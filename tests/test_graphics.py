@@ -89,9 +89,9 @@ def test_graphics_set(x, y, value, expected):
         (
             12,
             0,
-            0xFF,
+            0xAB,
             [
-                bitarray("0000 0000 0000 1111"),
+                bitarray("1011 0000 0000 1010"),
                 bitarray("0" * 16),
                 bitarray("0" * 16),
                 bitarray("0" * 16),
@@ -109,21 +109,20 @@ def test_graphics_set(x, y, value, expected):
             ],
         ),
         (
-            12,
+            14,
             3,
-            0xFF,
+            0xAB,
             [
                 bitarray("0" * 16),
                 bitarray("0" * 16),
                 bitarray("0" * 16),
-                bitarray("0000 0000 0000 1111"),
+                bitarray("1010 1100 0000 0010"),
             ],
         ),
     ],
 )
 def test_graphics_set_byte(x, y, value, expected):
     graphics = Graphics(width=16, height=4)
-    # graphics.pixels = bitarray(16 * 4)
 
     graphics.set_byte(x, y, value)
     assert graphics.pixels == expected

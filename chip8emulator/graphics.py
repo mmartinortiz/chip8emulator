@@ -115,12 +115,15 @@ class Graphics:
         length = 8
         end = x + length
 
+        # The length is always specified as 8 to ensure that leading 0s are kept.
         if end > self.width:
-            end = self.width
-            length = end - x
-
-        # Keep always a length of 8 bits
-        self.pixels[y][x:end] = int2ba(value, length=8)[:length]
+            # If the sprite is bigger than the screen, it is wrapped around.
+            draw_to = self.width - x
+            self.pixels[y][x : self.width] = int2ba(value, length=8)[:draw_to]
+            wrapped = end - self.width
+            self.pixels[y][0 : end - self.width] = int2ba(value, length=8)[-wrapped:]
+        else:
+            self.pixels[y][x:end] = int2ba(value, length=8)[:length]
 
     def as_list_of_integers(self) -> list[int]:
         """
