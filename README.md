@@ -4,14 +4,6 @@ An emulator for the CHIP-8 Chip written in Python. A small project for learning 
 
 ![The IBM logo](assets/ibm.png)
 
-## Development
-
-The project uses [devcontainers](https://containers.dev) to generate a development environment. However, you can always setup a local environment by installing the dependencies listed in the `pyproject.toml` file, using, for example, [uv](https://docs.astral.sh/uv/).
-
-```bash
-uv sync
-```
-
 ## Running the emulator
 
 You can run the emulator without installing the package:
@@ -19,6 +11,36 @@ You can run the emulator without installing the package:
 ```bash
 source .venv/bin/activate
 python -m chip8_emulator <path_to_rom>
+```
+
+## Keypad
+
+The following table shows the mapping between the CHIP-8 keypad and the computer keyboard:
+
+**Keyboard**
+
+|   |   |   |   |
+|---|---|---|---|
+| 1 | 2 | 3 | 4 |
+| Q | W | E | R |
+| A | S | D | F |
+| Z | X | C | V |
+
+**Chip-8 Keypad**
+
+|   |   |   |   |
+|---|---|---|---|
+| 1 | 2 | 3 | C |
+| 4 | 5 | 6 | D |
+| 7 | 8 | 9 | E |
+| A | 0 | B | F |
+
+## Development
+
+The project uses [devcontainers](https://containers.dev) to generate a development environment. However, you can always setup a local environment by installing the dependencies listed in the `pyproject.toml` file, using, for example, [uv](https://docs.astral.sh/uv/).
+
+```bash
+uv sync
 ```
 
 ## References
