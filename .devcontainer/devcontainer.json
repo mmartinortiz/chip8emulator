@@ -22,7 +22,7 @@
 		// 	"type": "bind"
 		// },
 		{
-			"source": "${localEnv:HOME}/.local/share/fish/fish_history",
+			"source": "${localEnv:HOME}/.devcontainers/${devcontainerId}/fish_history",
 			"target": "/home/vscode/.local/share/fish/fish_history",
 			"type": "bind"
 		},
@@ -39,14 +39,12 @@
 	},
 	"initializeCommand": {
 		"create host uv cache dir": "mkdir -p ~/.cache/uv",
-		"create fish history file": "mkdir -p ~/.local/share/fish && touch ~/.local/share/fish/fish_history"
+		"create fish history file": "mkdir -p ~/.devcontainers/${devcontainerId} && touch ~/.devcontainers/${devcontainerId}/fish_history"
 	},
 	"onCreateCommand": {
 		"uv sync": "uv venv && uv sync --all-groups",
 		"uv tox": "uv tool install tox --with tox-uv",
-		"uv autocompletion": "uv generate-shell-completion fish > ~/.config/fish/completions/uv.fish",
-		"pre-commit sample config": "if [ ! -e .pre-commit-config.yaml ]; then pre-commit sample-config > .pre-commit-config.yaml; fi",
-		"pre-commit": "if [ -e .pre-commit-config.yaml ]; then pre-commit install --install-hooks; fi"
+		"pre-commit hooks": "pre-commit install --install-hooks"
 	},
 	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
@@ -80,7 +78,8 @@
 				"cSpell.words": [
 					"bitarray",
 					"COSMAC",
-					"Pixmap"
+					"Pixmap",
+					"devcontainers"
 				]
 			}
 		}
