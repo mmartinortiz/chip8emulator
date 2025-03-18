@@ -5,18 +5,11 @@ authors = [{ name = "Manuel", email = "mmartinortiz@gmail.com" }]
 description = "An emulator of CHIP-8"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-  "bitarray>=3.0.0",
-  "loguru>=0.7.2",
-  "pyside6>=6.8.1",
-]
+dependencies = ["bitarray>=3.0.0", "loguru>=0.7.2", "pyside6>=6.8.1"]
 
 [dependency-groups]
-dev = [
-  "ipython>=8.30.0",
-  "pytest>=8.3.4",
-  "pytest-cov>=6.0.0",
-]
+dev = ["ipython>=8.30.0"]
+tests = ["pytest>=8.3.4", "pytest-cov>=6.0.0"]
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -35,23 +28,11 @@ testpaths = "tests"
 [tool.ruff]
 target-version = "py312"
 
-[tool.ruff.lint]
-select = [
-  "E4",
-  "E7",
-  "E9",
-  "F",
-  "I",  # Isort
-]
-
-[tool.ruff.lint.isort]
-combine-as-imports = true
-
 [tool.tox]
 requires = ["tox>=4.19"]
-env_list = ["3.13", "3.12", "3.11"]
+env_list = ["3.14", "3.13", "3.12", "3.11"]
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"
-deps = ["pytest", "pytest-cov"]
+dependency_groups = ["tests"]
 commands = [["pytest"]]
