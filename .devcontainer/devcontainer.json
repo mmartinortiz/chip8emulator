@@ -5,15 +5,47 @@
 	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
+		"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
 		"ghcr.io/va-h/devcontainers-features/uv:1": {
 			"shellautocompletion": true
 		},
-		"ghcr.io/meaningful-ooo/devcontainer-features/fish": "latest",
+		"ghcr.io/meaningful-ooo/devcontainer-features/fish": {},
 		"ghcr.io/devcontainers-extra/features/starship:1": {}
 	},
-	"mounts": [
-		"source=${localEnv:HOME}/.local/share/fish/fish_history,target=/home/vscode/.local/share/fish/fish_history,type=bind"
+	"runArgs": [
+		"--device=/dev/snd"
 	],
+	"mounts": [
+		// {
+		// 	"source": "/run/user/1000/pipewire-0",
+		// 	"target": "/tmp/user/1000/pipewire-0",
+		// 	"type": "bind"
+		// },
+		{
+			"source": "${localEnv:HOME}/.devcontainers/${devcontainerId}/fish_history",
+			"target": "/home/vscode/.local/share/fish/fish_history",
+			"type": "bind"
+		},
+		{
+			"source": "${localEnv:HOME}/.cache/uv",
+			"target": "/home/vscode/.uv_cache",
+			"type": "bind"
+		}
+	],
+	"remoteEnv": {
+		"UV_CACHE_DIR": "/home/vscode/.uv_cache",
+		"UV_LINK_MODE": "symlink"
+		// "XDG_RUNTIME_DIR": "/tmp/user/1000"
+	},
+	"initializeCommand": {
+		"create host uv cache dir": "mkdir -p ~/.cache/uv",
+		"create fish history file": "mkdir -p ~/.devcontainers/${devcontainerId} && touch ~/.devcontainers/${devcontainerId}/fish_history"
+	},
+	"onCreateCommand": {
+		"uv sync": "uv venv && uv sync --all-groups",
+		"uv tox": "uv tool install tox --with tox-uv",
+		"pre-commit hooks": "pre-commit install --install-hooks"
+	},
 	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
 	"customizations": {
 		"vscode": {
@@ -46,7 +78,8 @@
 				"cSpell.words": [
 					"bitarray",
 					"COSMAC",
-					"Pixmap"
+					"Pixmap",
+					"devcontainers"
 				]
 			}
 		}
