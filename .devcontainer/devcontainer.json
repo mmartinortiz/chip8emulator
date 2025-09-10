@@ -1,87 +1,92 @@
 {
-	"name": "Python 3",
-	"build": {
-		"dockerfile": "Dockerfile"
-	},
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	"features": {
-		"ghcr.io/devcontainers-extra/features/pre-commit:2": {},
-		"ghcr.io/va-h/devcontainers-features/uv:1": {
-			"shellautocompletion": true
-		},
-		"ghcr.io/meaningful-ooo/devcontainer-features/fish": {},
-		"ghcr.io/devcontainers-extra/features/starship:1": {}
-	},
-	"runArgs": [
-		"--device=/dev/snd"
-	],
-	"mounts": [
-		// {
-		// 	"source": "/run/user/1000/pipewire-0",
-		// 	"target": "/tmp/user/1000/pipewire-0",
-		// 	"type": "bind"
-		// },
-		{
-			"source": "${localEnv:HOME}/.devcontainers/${devcontainerId}/fish_history",
-			"target": "/home/vscode/.local/share/fish/fish_history",
-			"type": "bind"
-		},
-		{
-			"source": "${localEnv:HOME}/.cache/uv",
-			"target": "/home/vscode/.uv_cache",
-			"type": "bind"
-		}
-	],
-	"remoteEnv": {
-		"UV_CACHE_DIR": "/home/vscode/.uv_cache",
-		"UV_LINK_MODE": "symlink"
-		// "XDG_RUNTIME_DIR": "/tmp/user/1000"
-	},
-	"initializeCommand": {
-		"create host uv cache dir": "mkdir -p ~/.cache/uv",
-		"create fish history file": "mkdir -p ~/.devcontainers/${devcontainerId} && touch ~/.devcontainers/${devcontainerId}/fish_history"
-	},
-	"onCreateCommand": {
-		"uv sync": "uv venv && uv sync --all-groups",
-		"uv tox": "uv tool install tox --with tox-uv",
-		"pre-commit hooks": "pre-commit install --install-hooks"
-	},
-	"postCreateCommand": ".devcontainer/postCreateCommand.sh",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"tamasfe.even-better-toml",
-				"charliermarsh.ruff",
-				"ms-vscode.hexeditor",
-				"streetsidesoftware.code-spell-checker",
-				"njpwerner.autodocstring"
-			],
-			"settings": {
-				"python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
-				"python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
-				"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-				"python.testing.unittestEnabled": false,
-				"python.testing.pytestEnabled": true,
-				"python.testing.pytestArgs": [
-					"tests",
-					"--no-cov"
-				],
-				"[python]": {
-					"editor.defaultFormatter": "charliermarsh.ruff",
-					"editor.formatOnSave": true,
-					"editor.codeActionsOnSave": {
-						"source.fixAll": "explicit",
-						"source.organizeImports": "explicit"
-					}
-				},
-				"ruff.organizeImports": true,
-				"cSpell.words": [
-					"bitarray",
-					"COSMAC",
-					"Pixmap",
-					"devcontainers"
-				]
-			}
-		}
-	}
+  "name": "Chip8emulator",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers-extra/features/pre-commit:2": {},
+    "ghcr.io/va-h/devcontainers-features/uv:1": {
+      "shellautocompletion": true
+    },
+    "ghcr.io/meaningful-ooo/devcontainer-features/fish": {},
+    "ghcr.io/devcontainers-extra/features/starship:1": {}
+  },
+  "runArgs": [
+    "--device=/dev/snd",
+    "--device=/dev/dri"
+  ],
+  "mounts": [
+    // {
+    // 	"source": "/run/user/1000/pipewire-0",
+    // 	"target": "/tmp/user/1000/pipewire-0",
+    // 	"type": "bind"
+    // },
+    {
+      "source": "${localEnv:HOME}/.devcontainers/${devcontainerId}/fish_history",
+      "target": "/home/vscode/.local/share/fish/fish_history",
+      "type": "bind"
+    },
+    {
+      "source": "${localEnv:HOME}/.cache/uv",
+      "target": "/home/vscode/.uv_cache",
+      "type": "bind"
+    }
+  ],
+  "remoteEnv": {
+    "UV_CACHE_DIR": "/home/vscode/.uv_cache",
+    "UV_LINK_MODE": "symlink"
+    // "XDG_RUNTIME_DIR": "/tmp/user/1000"
+  },
+  "initializeCommand": {
+    "create host uv cache dir": "mkdir -p ~/.cache/uv",
+    "create fish history file": "mkdir -p ~/.devcontainers/${devcontainerId} && touch ~/.devcontainers/${devcontainerId}/fish_history"
+  },
+  "onCreateCommand": {
+    "uv sync": "uv venv --clear && uv sync --all-groups",
+    "uv tox": "uv tool install tox --with tox-uv",
+    "pre-commit hooks": "pre-commit install --install-hooks"
+  },
+  "postCreateCommand": {
+    "setup user config": ".devcontainer/postCreateCommand.sh",
+    "clean up tox": "rm -fr ${containerWorkspaceFolder}/.tox"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "tamasfe.even-better-toml",
+        "charliermarsh.ruff",
+        "ms-vscode.hexeditor",
+        "streetsidesoftware.code-spell-checker",
+        "njpwerner.autodocstring"
+      ],
+      "settings": {
+        "python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
+        "python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+          "tests",
+          "--no-cov"
+        ],
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        "ruff.organizeImports": true,
+        "cSpell.customDictionaries": {
+          "workspace-dictionary": {
+            "name": "workspace-dictionary",
+            "path": "${workspaceFolder:chip8emulator}/.devcontainer/workspace-dictionary.txt",
+            "addWords": true,
+            "scope": "workspace"
+          }
+        }
+      }
+    }
+  }
 }

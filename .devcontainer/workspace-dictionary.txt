@@ -1,0 +1,9 @@
+bitarray
+charliermarsh
+COSMAC
+devcontainers
+hexeditor
+njpwerner
+Pixmap
+pytest
+tamasfe
