@@ -57,7 +57,8 @@
         "charliermarsh.ruff",
         "ms-vscode.hexeditor",
         "streetsidesoftware.code-spell-checker",
-        "njpwerner.autodocstring"
+        "njpwerner.autodocstring",
+        "maziac.hex-hover-converter"
       ],
       "settings": {
         "python.pythonPath": "${containerWorkspaceFolder}/.venv/bin/python",
